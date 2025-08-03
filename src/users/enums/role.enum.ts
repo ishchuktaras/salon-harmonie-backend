@@ -1,0 +1,13 @@
+// src/users/enums/role.enum.ts
+
+export enum Role {
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ADMIN = 'ADMIN',
+  TERAPEUT = 'TERAPEUT',
+  RECEPCNI = 'RECEPCNI',
+  ASISTENT = 'ASISTENT',
+  KOORDINATOR = 'KOORDINATOR',
+  MASER = 'MASER',
+  MANAGER = 'MANAGER',
+  ESHOP_SPRAVCE = 'ESHOP_SPRAVCE',
+}

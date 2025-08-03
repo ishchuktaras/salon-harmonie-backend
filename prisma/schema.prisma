@@ -1,0 +1,68 @@
+// Tento blok definuje připojení k databázi.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tento blok říká Prismě, jakého klienta má generovat.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Zde definujeme naše datové modely.
+
+// Model pro všechny uživatele systému (zaměstnance)
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  firstName    String
+  lastName     String
+  passwordHash String
+  role         Role     
+  createdAt    DateTime @default(now())
+
+  // Vztahy
+  reservationsAsTherapist Reservation[] @relation("TherapistReservations")
+}
+
+// Model pro klienty salonu
+model Client {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  firstName String
+  lastName  String
+  phone     String?
+  createdAt DateTime @default(now())
+
+  // Vztahy
+  reservations Reservation[] @relation("ClientReservations")
+}
+
+// Model pro rezervace
+model Reservation {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime
+  status    String   @default("confirmed")
+  notes     String?
+  createdAt DateTime @default(now())
+
+  // Vztahy
+  therapist   User     @relation("TherapistReservations", fields: [therapistId], references: [id])
+  therapistId Int
+  client      Client   @relation("ClientReservations", fields: [clientId], references: [id])
+  clientId    Int
+}
+
+// Výčet rolí pro zaměstnance
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  TERAPEUT
+  RECEPCNI
+  ASISTENT
+  KOORDINATOR
+  MASER
+  MANAGER
+  ESHOP_SPRAVCE
+}
