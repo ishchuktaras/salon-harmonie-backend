@@ -1,5 +1,13 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Request,
+  UseGuards,
+  Get, // <-- Ujistěte se, že je Get naimportovaný
+  UnauthorizedException, // <-- Přidáme pro lepší chybovou hlášku
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -7,15 +15,21 @@ import { AuthGuard } from '@nestjs/passport';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // Tento endpoint bude na adrese POST /auth/login
   @Post('login')
   async login(@Body() body) {
-    // Tady bude validace, kterou doděláme v dalším kroku
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) {
-      // V reálné aplikaci by zde měla být lepší chybová hláška
-      throw new Error('Invalid credentials');
+      // Vylepšená chybová hláška
+      throw new UnauthorizedException('Neplatný e-mail nebo heslo.');
     }
     return this.authService.login(user);
+  }
+
+  
+  @UseGuards(AuthGuard('jwt')) // Nasadíme "strážníka", který vyžaduje platný token
+  @Get('profile') // Tento endpoint bude poslouchat na adrese GET /auth/profile
+  getProfile(@Request() req) {
+    // Díky našemu "strážníkovi" (JwtStrategy) máme v req.user data z tokenu
+    return req.user;
   }
 }

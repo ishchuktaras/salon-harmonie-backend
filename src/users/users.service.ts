@@ -1,9 +1,14 @@
 // src/users/users.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
@@ -19,19 +24,31 @@ export class UsersService {
       saltRounds,
     );
 
-    const user = await this.prisma.user.create({
-      data: {
-        email: createUserDto.email,
-        firstName: createUserDto.firstName,
-        lastName: createUserDto.lastName,
-        role: createUserDto.role,
-        passwordHash: hashedPassword,
-      },
-    });
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: createUserDto.email,
+          firstName: createUserDto.firstName,
+          lastName: createUserDto.lastName,
+          role: createUserDto.role,
+          passwordHash: hashedPassword,
+        },
+      });
 
-    // Odstraníme hash hesla z objektu, který vracíme
-    const { passwordHash, ...result } = user;
-    return result;
+      const { passwordHash, ...result } = user;
+      return result;
+    } catch (error) {
+      // Zkontrolujeme, jestli se jedná o chybu duplicitního záznamu (kód P2002)
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        // Pokud ano, vrátíme hezkou chybu 409 Conflict
+        throw new ConflictException('Uživatel s tímto e-mailem již existuje.');
+      }
+      // Pokud je to jiná chyba, necháme ji projít dál
+      throw error;
+    }
   }
 
   /**
@@ -39,7 +56,6 @@ export class UsersService {
    */
   async findAll() {
     const users = await this.prisma.user.findMany();
-    // Projdeme všechny uživatele a odstraníme z nich hesla
     return users.map((user) => {
       const { passwordHash, ...result } = user;
       return result;
@@ -73,7 +89,6 @@ export class UsersService {
    * Upraví data uživatele.
    */
   async update(id: number, updateUserDto: UpdateUserDto) {
-    // Zde by v budoucnu mohla být i logika pro změnu hesla
     const user = await this.prisma.user.update({
       where: { id },
       data: updateUserDto,
