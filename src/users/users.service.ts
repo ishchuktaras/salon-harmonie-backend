@@ -105,4 +105,15 @@ export class UsersService {
     const { passwordHash, ...result } = user;
     return result;
   }
+
+  assignService(userId: number, serviceId: number) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        services: {
+          connect: { id: serviceId }, // Propojíme existující službu
+        },
+      },
+    });
+  }
 }

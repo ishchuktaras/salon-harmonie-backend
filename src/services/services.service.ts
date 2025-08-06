@@ -30,4 +30,25 @@ export class ServicesService {
   remove(id: number) {
     return this.prisma.service.delete({ where: { id } });
   }
+
+  async findTherapistsForService(id: number) {
+  const service = await this.prisma.service.findUnique({
+    where: { id },
+    include: {
+      therapists: true, // Načteme všechny propojené terapeuty
+    },
+  });
+
+  if (!service) {
+    return null;
+  }
+
+  // Odstraníme hesla z odpovědi
+  const therapistsWithoutPassword = service.therapists.map((therapist) => {
+    const { passwordHash, ...result } = therapist;
+    return result;
+  });
+
+  return therapistsWithoutPassword;
+}
 }

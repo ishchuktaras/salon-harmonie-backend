@@ -23,6 +23,7 @@ model User {
 
   // Vztahy
   reservationsAsTherapist Reservation[] @relation("TherapistReservations")
+  services                Service[]     // <-- TENTO ŘÁDEK JE NOVÝ
 }
 
 // Model pro klienty salonu
@@ -62,6 +63,8 @@ model Service {
   price       Int      // Cena v haléřích pro přesnost
   duration    Int      // Délka v minutách
   createdAt   DateTime @default(now())
+
+  therapists  User[]   // <-- TENTO ŘÁDEK JE NOVÝ
 }
 
 // Výčet rolí pro zaměstnance

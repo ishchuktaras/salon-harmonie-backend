@@ -1,5 +1,13 @@
 // src/users/users.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -37,5 +45,14 @@ export class UsersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
+  }
+
+  @Roles(Role.MANAGER, Role.ADMIN)
+  @Post(':userId/services/:serviceId')
+  assignService(
+    @Param('userId') userId: string,
+    @Param('serviceId') serviceId: string,
+  ) {
+    return this.usersService.assignService(+userId, +serviceId);
   }
 }
