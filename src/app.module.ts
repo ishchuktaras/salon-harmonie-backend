@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ClientsModule } from './clients/clients.module';
+import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ClientsModule } from './clients/clients.module';
     UsersModule,
     AuthModule,
     ClientsModule,
+    ReservationsModule,
   ],
   controllers: [AppController],
   providers: [AppService], 
