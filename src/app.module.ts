@@ -7,6 +7,10 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { ClientsModule } from './clients/clients.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './auth/roles.guard';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { ServicesModule } from './services/services.module';
 import { ReservationsModule } from './reservations/reservations.module';
 
 @Module({
@@ -17,8 +21,19 @@ import { ReservationsModule } from './reservations/reservations.module';
     AuthModule,
     ClientsModule,
     ReservationsModule,
+    ServicesModule,
   ],
   controllers: [AppController],
-  providers: [AppService], 
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // 1. Nejdříve se spustí kontrola tokenu
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard, // 2. Až potom se spustí kontrola rolí
+    },
+  ],
 })
 export class AppModule {}

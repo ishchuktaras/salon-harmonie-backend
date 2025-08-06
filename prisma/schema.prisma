@@ -54,6 +54,16 @@ model Reservation {
   clientId    Int
 }
 
+// Model pro nabízené služby
+model Service {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  price       Int      // Cena v haléřích pro přesnost
+  duration    Int      // Délka v minutách
+  createdAt   DateTime @default(now())
+}
+
 // Výčet rolí pro zaměstnance
 enum Role {
   SUPER_ADMIN

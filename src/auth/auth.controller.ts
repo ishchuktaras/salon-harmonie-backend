@@ -5,31 +5,28 @@ import {
   Body,
   Request,
   UseGuards,
-  Get, // <-- Ujistěte se, že je Get naimportovaný
-  UnauthorizedException, // <-- Přidáme pro lepší chybovou hlášku
+  Get,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthGuard } from '@nestjs/passport';
+import { Public } from 'src/auth/public.decorator'; // <-- Přidejte tento import
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('login')
   async login(@Body() body) {
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) {
-      // Vylepšená chybová hláška
       throw new UnauthorizedException('Neplatný e-mail nebo heslo.');
     }
     return this.authService.login(user);
   }
 
-  
-  @UseGuards(AuthGuard('jwt')) // Nasadíme "strážníka", který vyžaduje platný token
-  @Get('profile') // Tento endpoint bude poslouchat na adrese GET /auth/profile
+  @Get('profile') // Tento endpoint zůstává chráněný, protože nemá @Public()
   getProfile(@Request() req) {
-    // Díky našemu "strážníkovi" (JwtStrategy) máme v req.user data z tokenu
     return req.user;
   }
 }
