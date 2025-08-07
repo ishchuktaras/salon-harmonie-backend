@@ -18,12 +18,14 @@ model User {
   firstName    String
   lastName     String
   passwordHash String
-  role         Role     
+  role         Role
   createdAt    DateTime @default(now())
 
   // Vztahy
-  reservationsAsTherapist Reservation[] @relation("TherapistReservations")
-  services                Service[]     // <-- TENTO ŘÁDEK JE NOVÝ
+  reservationsAsTherapist Reservation[]  @relation("TherapistReservations")
+  services                Service[]
+  workSchedules           WorkSchedule[] 
+  timeBlocks              TimeBlock[] 
 }
 
 // Model pro klienty salonu
@@ -49,9 +51,9 @@ model Reservation {
   createdAt DateTime @default(now())
 
   // Vztahy
-  therapist   User     @relation("TherapistReservations", fields: [therapistId], references: [id])
+  therapist   User   @relation("TherapistReservations", fields: [therapistId], references: [id])
   therapistId Int
-  client      Client   @relation("ClientReservations", fields: [clientId], references: [id])
+  client      Client @relation("ClientReservations", fields: [clientId], references: [id])
   clientId    Int
 }
 
@@ -60,11 +62,33 @@ model Service {
   id          Int      @id @default(autoincrement())
   name        String   @unique
   description String?
-  price       Int      // Cena v haléřích pro přesnost
-  duration    Int      // Délka v minutách
+  price       Int // Cena v haléřích pro přesnost
+  duration    Int // Délka v minutách
   createdAt   DateTime @default(now())
 
-  therapists  User[]   // <-- TENTO ŘÁDEK JE NOVÝ
+  therapists User[]
+}
+
+// MODEL pro pracovní dobu (např. Pondělí 9:00 - 17:00)
+model WorkSchedule {
+  id        Int    @id @default(autoincrement())
+  dayOfWeek Int // 0 = Neděle, 1 = Pondělí, ..., 6 = Sobota
+  startTime String // Formát "HH:mm", např. "09:00"
+  endTime   String // Formát "HH:mm", např. "17:00"
+
+  therapist   User @relation(fields: [therapistId], references: [id])
+  therapistId Int
+}
+
+// MODEL pro jednorázové blokace (pauza, dovolená)
+model TimeBlock {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime
+  reason    String? // např. "Oběd" nebo "Dovolená"
+
+  therapist   User @relation(fields: [therapistId], references: [id])
+  therapistId Int
 }
 
 // Výčet rolí pro zaměstnance
