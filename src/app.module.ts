@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ServicesModule } from './services/services.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { ScheduleModule } from './schedule/schedule.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CalendarModule } from './calendar/calendar.module';
     ReservationsModule,
     ServicesModule,
     CalendarModule,
+    ScheduleModule,
   ],
   controllers: [AppController],
   providers: [
