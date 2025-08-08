@@ -1,34 +1,46 @@
 // src/clients/clients.service.ts
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ClientsService {
-  // Tímto si "vstříkneme" náš nástroj pro práci s databází
   constructor(private prisma: PrismaService) {}
 
-  // Vytvoří nového klienta
-  create(createClientDto: CreateClientDto) {
-    return this.prisma.client.create({
-      data: createClientDto,
-    });
+  async create(createClientDto: CreateClientDto) {
+    try {
+      return await this.prisma.client.create({
+        data: createClientDto,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Klient s tímto e-mailem již existuje.');
+      }
+      throw error;
+    }
   }
 
-  // Najde všechny klienty
   findAll() {
     return this.prisma.client.findMany();
   }
 
-  // Najde jednoho klienta podle jeho ID
-  findOne(id: number) {
-    return this.prisma.client.findUnique({
-      where: { id },
-    });
+  async findOne(id: number) {
+    const client = await this.prisma.client.findUnique({ where: { id } });
+    if (!client) {
+      throw new NotFoundException(`Klient s ID ${id} nebyl nalezen.`);
+    }
+    return client;
   }
 
-  // Upraví klienta podle jeho ID
   update(id: number, updateClientDto: UpdateClientDto) {
     return this.prisma.client.update({
       where: { id },
@@ -36,10 +48,7 @@ export class ClientsService {
     });
   }
 
-  // Smaže klienta podle jeho ID
   remove(id: number) {
-    return this.prisma.client.delete({
-      where: { id },
-    });
+    return this.prisma.client.delete({ where: { id } });
   }
 }

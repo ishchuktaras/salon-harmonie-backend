@@ -15,6 +15,7 @@ import { ReservationsModule } from './reservations/reservations.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { TransactionsModule } from './transactions/transactions.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { TransactionsModule } from './transactions/transactions.module';
     CalendarModule,
     ScheduleModule,
     TransactionsModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [

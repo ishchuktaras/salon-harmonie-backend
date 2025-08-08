@@ -3,7 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { AddTransactionItemDto } from './dto/add-item.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -45,41 +45,63 @@ export class TransactionsService {
     });
   }
 
-  // --- DOPLNĚNÉ METODY ---
-  findAll() {
-    // Vrátíme všechny transakce i s jejich položkami
-    return this.prisma.transaction.findMany({
-      include: {
-        items: true,
-        client: { // Přidáme i jméno klienta
-          select: { firstName: true, lastName: true }
-        }
+  async addItem(transactionId: number, dto: AddTransactionItemDto) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: dto.productId },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Produkt nenalezen');
+    }
+
+    await this.prisma.transactionItem.create({
+      data: {
+        name: product.name,
+        price: product.price,
+        quantity: dto.quantity,
+        productId: dto.productId,
+        transactionId: transactionId,
       },
+    });
+
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: { items: true },
+    });
+
+    // Zkontrolujeme, jestli transakce existuje
+    if (!transaction) {
+      throw new NotFoundException('Transakce po přidání položky nenalezena.');
+    }
+
+    const total = transaction.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+
+    return this.prisma.transaction.update({
+      where: { id: transactionId },
+      data: { total },
+      include: { items: true },
     });
   }
 
-  async findOne(id: number) {
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { id },
-      include: {
-        items: true,
-        client: {
-          select: { firstName: true, lastName: true }
-        }
-      },
-    });
+  findAll() {
+    return this.prisma.transaction.findMany({ include: { items: true } });
+  }
 
-    if (!transaction) {
-      throw new NotFoundException(`Transakce s ID ${id} nebyla nalezena.`);
-    }
-    return transaction;
+  findOne(id: number) {
+    return this.prisma.transaction.findUnique({
+      where: { id },
+      include: { items: true },
+    });
   }
 
   update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    return `This action updates a #${id} transaction`; // Zatím neimplementováno
+    return `This action updates a #${id} transaction`;
   }
 
   remove(id: number) {
-    return this.prisma.transaction.delete({ where: { id } }); // Základní smazání
+    return this.prisma.transaction.delete({ where: { id } });
   }
 }
