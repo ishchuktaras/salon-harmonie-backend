@@ -13,81 +13,105 @@ generator client {
 
 // Model pro všechny uživatele systému (zaměstnance)
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  firstName    String
-  lastName     String
-  passwordHash String
-  role         Role
-  createdAt    DateTime @default(now())
-
+  id                      Int            @id @default(autoincrement())
+  email                   String         @unique
+  firstName               String
+  lastName                String
+  passwordHash            String
+  role                    Role
+  createdAt               DateTime       @default(now())
   // Vztahy
   reservationsAsTherapist Reservation[]  @relation("TherapistReservations")
   services                Service[]
-  workSchedules           WorkSchedule[] 
-  timeBlocks              TimeBlock[] 
+  workSchedules           WorkSchedule[]
+  timeBlocks              TimeBlock[]
 }
 
 // Model pro klienty salonu
 model Client {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  firstName String
-  lastName  String
-  phone     String?
-  createdAt DateTime @default(now())
-
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  firstName    String
+  lastName     String
+  phone        String?
+  createdAt    DateTime      @default(now())
   // Vztahy
   reservations Reservation[] @relation("ClientReservations")
+  transactions Transaction[] // <-- PŘIDÁNO
 }
 
 // Model pro rezervace
 model Reservation {
-  id        Int      @id @default(autoincrement())
-  startTime DateTime
-  endTime   DateTime
-  status    String   @default("confirmed")
-  notes     String?
-  createdAt DateTime @default(now())
-
+  id          Int          @id @default(autoincrement())
+  startTime   DateTime
+  endTime     DateTime
+  status      String       @default("confirmed")
+  notes       String?
+  createdAt   DateTime     @default(now())
   // Vztahy
-  therapist   User   @relation("TherapistReservations", fields: [therapistId], references: [id])
+  therapist   User         @relation("TherapistReservations", fields: [therapistId], references: [id])
   therapistId Int
-  client      Client @relation("ClientReservations", fields: [clientId], references: [id])
+  client      Client       @relation("ClientReservations", fields: [clientId], references: [id])
   clientId    Int
+  service     Service      @relation(fields: [serviceId], references: [id]) 
+  serviceId   Int         
+  transaction Transaction?
 }
 
 // Model pro nabízené služby
 model Service {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  description String?
-  price       Int // Cena v haléřích pro přesnost
-  duration    Int // Délka v minutách
-  createdAt   DateTime @default(now())
-
-  therapists User[]
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  description  String?
+  price        Int // Cena v haléřích pro přesnost
+  duration     Int // Délka v minutách
+  createdAt    DateTime      @default(now())
+  therapists   User[]
+  reservations Reservation[] // <-- PŘIDÁNO
 }
 
-// MODEL pro pracovní dobu (např. Pondělí 9:00 - 17:00)
-model WorkSchedule {
-  id        Int    @id @default(autoincrement())
-  dayOfWeek Int // 0 = Neděle, 1 = Pondělí, ..., 6 = Sobota
-  startTime String // Formát "HH:mm", např. "09:00"
-  endTime   String // Formát "HH:mm", např. "17:00"
+// MODEL pro Transakce (účtenky)
+model Transaction {
+  id            Int               @id @default(autoincrement())
+  total         Int
+  paymentMethod String
+  createdAt     DateTime          @default(now())
+  clientId      Int
+  client        Client            @relation(fields: [clientId], references: [id])
+  reservationId Int?              @unique
+  reservation   Reservation?      @relation(fields: [reservationId], references: [id])
+  items         TransactionItem[]
+}
 
-  therapist   User @relation(fields: [therapistId], references: [id])
+// MODEL pro Položky na účtence
+model TransactionItem {
+  id            Int         @id @default(autoincrement())
+  name          String
+  price         Int
+  quantity      Int         @default(1)
+  transactionId Int
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  serviceId     Int?
+  productId     Int? // Pro budoucí propojení s e-shop produkty
+}
+
+// MODEL pro pracovní dobu
+model WorkSchedule {
+  id          Int    @id @default(autoincrement())
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  therapist   User   @relation(fields: [therapistId], references: [id])
   therapistId Int
 }
 
-// MODEL pro jednorázové blokace (pauza, dovolená)
+// MODEL pro jednorázové blokace
 model TimeBlock {
-  id        Int      @id @default(autoincrement())
-  startTime DateTime
-  endTime   DateTime
-  reason    String? // např. "Oběd" nebo "Dovolená"
-
-  therapist   User @relation(fields: [therapistId], references: [id])
+  id          Int      @id @default(autoincrement())
+  startTime   DateTime
+  endTime     DateTime
+  reason      String?
+  therapist   User     @relation(fields: [therapistId], references: [id])
   therapistId Int
 }
 

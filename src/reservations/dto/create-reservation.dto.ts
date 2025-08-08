@@ -4,7 +4,7 @@ import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-val
 export class CreateReservationDto {
   @IsDateString()
   @IsNotEmpty()
-  startTime: string; // Očekáváme datum ve formátu ISO 8601, např. "2025-08-06T10:00:00.000Z"
+  startTime: string;
 
   @IsDateString()
   @IsNotEmpty()
@@ -18,7 +18,11 @@ export class CreateReservationDto {
   @IsNotEmpty()
   clientId: number;
 
+  @IsInt()
+  @IsNotEmpty()
+  serviceId: number;
+
   @IsString()
-  @IsOptional() 
+  @IsOptional()
   notes?: string;
 }

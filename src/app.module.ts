@@ -14,6 +14,7 @@ import { ServicesModule } from './services/services.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { ScheduleModule } from './schedule/schedule.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ScheduleModule } from './schedule/schedule.module';
     ServicesModule,
     CalendarModule,
     ScheduleModule,
+    TransactionsModule,
   ],
   controllers: [AppController],
   providers: [
