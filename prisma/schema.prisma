@@ -75,6 +75,7 @@ model Transaction {
   id            Int               @id @default(autoincrement())
   total         Int
   paymentMethod String
+  status        String            @default("COMPLETED")
   createdAt     DateTime          @default(now())
   clientId      Int
   client        Client            @relation(fields: [clientId], references: [id])
@@ -124,7 +125,7 @@ model Product {
   price            Int
   stockQuantity    Int               @default(0)
   createdAt        DateTime          @default(now())
-  transactionItems TransactionItem[] // <-- TENTO ŘÁDEK JE NOVÝ
+  transactionItems TransactionItem[] 
 }
 
 // Výčet rolí pro zaměstnance
