@@ -17,6 +17,7 @@ import { ScheduleModule } from './schedule/schedule.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { ProductsModule } from './products/products.module';
 import { ReportsModule } from './reports/reports.module';
+import { AbraFlexiModule } from './abra-flexi/abra-flexi.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ReportsModule } from './reports/reports.module';
     TransactionsModule,
     ProductsModule,
     ReportsModule,
+    AbraFlexiModule,
   ],
   controllers: [AppController],
   providers: [

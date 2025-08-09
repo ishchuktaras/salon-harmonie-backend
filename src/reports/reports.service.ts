@@ -1,17 +1,20 @@
 // src/reports/reports.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AbraFlexiService } from 'src/abra-flexi/abra-flexi.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private abraFlexiService: AbraFlexiService,
+  ) {}
 
   async performDailyCloseout(date: string) {
     const targetDate = new Date(date);
     const startDate = new Date(targetDate.setHours(0, 0, 0, 0));
     const endDate = new Date(targetDate.setHours(23, 59, 59, 999));
 
-    // 1. Najdeme všechny dokončené transakce pro daný den
     const transactionsToClose = await this.prisma.transaction.findMany({
       where: {
         status: 'COMPLETED',
@@ -23,10 +26,13 @@ export class ReportsService {
     });
 
     if (transactionsToClose.length === 0) {
-      return { message: 'Žádné transakce k uzávěrce.', totalRevenue: 0, closedCount: 0 };
+      return {
+        message: 'Žádné transakce k uzávěrce.',
+        totalRevenue: 0,
+        closedCount: 0,
+      };
     }
 
-    // 2. Sečteme jejich celkovou hodnotu
     const totalRevenue = transactionsToClose.reduce(
       (sum, transaction) => sum + transaction.total,
       0,
@@ -34,7 +40,6 @@ export class ReportsService {
 
     const transactionIds = transactionsToClose.map((t) => t.id);
 
-    // 3. Aktualizujeme jejich status na "CLOSED"
     await this.prisma.transaction.updateMany({
       where: {
         id: {
@@ -46,12 +51,11 @@ export class ReportsService {
       },
     });
 
-    // Zde v budoucnu zavoláme funkci pro odeslání dat do ABRA Flexi
-    // např. this.abraFlexiService.sendSummary(totalRevenue);
+    await this.abraFlexiService.sendDailySummary(totalRevenue, date);
 
     return {
       message: `Uzávěrka pro den ${date} byla úspěšně provedena.`,
-      totalRevenue: totalRevenue / 100, // Vracíme v korunách
+      totalRevenue: totalRevenue / 100,
       closedCount: transactionsToClose.length,
     };
   }
