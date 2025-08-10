@@ -69,7 +69,6 @@ export class TransactionsService {
       include: { items: true },
     });
 
-    // Zkontrolujeme, jestli transakce existuje
     if (!transaction) {
       throw new NotFoundException('Transakce po přidání položky nenalezena.');
     }
@@ -103,5 +102,81 @@ export class TransactionsService {
 
   remove(id: number) {
     return this.prisma.transaction.delete({ where: { id } });
+  }
+
+  // --- TOTO JE NOVÁ METODA ---
+  async generateReceiptHtml(id: number): Promise<string> {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        client: true,
+      },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(`Transakce s ID ${id} nebyla nalezena.`);
+    }
+
+    const itemsHtml = transaction.items
+      .map(
+        (item) => `
+      <tr>
+        <td>${item.name}</td>
+        <td>${item.quantity}</td>
+        <td>${(item.price / 100).toFixed(2)} Kč</td>
+        <td>${((item.price * item.quantity) / 100).toFixed(2)} Kč</td>
+      </tr>
+    `,
+      )
+      .join('');
+
+    const receiptHtml = `
+      <!DOCTYPE html>
+      <html lang="cs">
+      <head>
+        <meta charset="UTF-8">
+        <title>Účtenka č. ${transaction.id}</title>
+        <style>
+          body { font-family: sans-serif; margin: 20px; }
+          .receipt { width: 300px; border: 1px solid #ccc; padding: 15px; }
+          h1 { text-align: center; margin-top: 0; }
+          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+          th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+          .total { font-weight: bold; font-size: 1.2em; text-align: right; margin-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <h1>Salon Harmonie</h1>
+          <p><strong>Datum:</strong> ${new Date(
+            transaction.createdAt,
+          ).toLocaleString('cs-CZ')}</p>
+          <p><strong>Zákazník:</strong> ${transaction.client.firstName} ${
+            transaction.client.lastName
+          }</p>
+          <p><strong>Doklad č.:</strong> ${transaction.id}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Položka</th>
+                <th>Ks</th>
+                <th>Cena/ks</th>
+                <th>Celkem</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <div class="total">
+            Celkem k úhradě: ${(transaction.total / 100).toFixed(2)} Kč
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    return receiptHtml;
   }
 }

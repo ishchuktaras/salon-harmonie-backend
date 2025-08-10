@@ -7,14 +7,16 @@ import {
   Param,
   Delete,
   UseGuards,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express'; // <-- TOTO JE KLÍČOVÁ OPRAVA
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'src/users/enums/role.enum';
-import { AddTransactionItemDto } from './dto/add-item.dto'; // <-- Přidali jsme import
+import { AddTransactionItemDto } from './dto/add-item.dto';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('transactions')
@@ -50,5 +52,12 @@ export class TransactionsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.transactionsService.remove(+id);
+  }
+
+  @Get(':id/receipt')
+  async getReceipt(@Param('id') id: string, @Res() res: Response) {
+    const html = await this.transactionsService.generateReceiptHtml(+id);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
   }
 }
