@@ -104,7 +104,7 @@ export class TransactionsService {
     return this.prisma.transaction.delete({ where: { id } });
   }
 
-  // --- TOTO JE NOVÁ METODA ---
+  // --- TATO METODA CHYBĚLA ---
   async generateReceiptHtml(id: number): Promise<string> {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },

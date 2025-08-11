@@ -3,15 +3,32 @@ import { Injectable } from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { MailService } from 'src/mail/mail.service'; 
 
 @Injectable()
 export class ReservationsService {
-  constructor(private prisma: PrismaService) {}
+  // Upravili jsme konstruktor, aby si "vstříknul" novou službu
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
 
-  create(createReservationDto: CreateReservationDto) {
-    return this.prisma.reservation.create({
+  async create(createReservationDto: CreateReservationDto) {
+    // Vytvoříme rezervaci a rovnou si načteme i propojená data,
+    // která potřebujeme pro e-mail (klient, služba, terapeut).
+    const newReservation = await this.prisma.reservation.create({
       data: createReservationDto,
+      include: {
+        client: true,
+        service: true,
+        therapist: true,
+      },
     });
+
+    // Zavoláme naši novou funkci pro odeslání e-mailu
+    await this.mailService.sendReservationConfirmation(newReservation);
+
+    return newReservation;
   }
 
   findAll(startDate?: string, endDate?: string) {

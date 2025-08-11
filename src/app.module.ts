@@ -18,6 +18,8 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { ProductsModule } from './products/products.module';
 import { ReportsModule } from './reports/reports.module';
 import { AbraFlexiModule } from './abra-flexi/abra-flexi.module';
+import { OrdersModule } from './orders/orders.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { AbraFlexiModule } from './abra-flexi/abra-flexi.module';
     ProductsModule,
     ReportsModule,
     AbraFlexiModule,
+    OrdersModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

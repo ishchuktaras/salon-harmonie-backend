@@ -38,6 +38,7 @@ model Client {
   // Vztahy
   reservations Reservation[] @relation("ClientReservations")
   transactions Transaction[]
+  orders       Order[] 
 }
 
 // Model pro rezervace
@@ -117,7 +118,7 @@ model TimeBlock {
   therapistId Int
 }
 
-// NOVÝ MODEL pro produkty v e-shopu
+// MODEL pro produkty v e-shopu
 model Product {
   id               Int               @id @default(autoincrement())
   name             String            @unique
@@ -125,8 +126,36 @@ model Product {
   price            Int
   stockQuantity    Int               @default(0)
   createdAt        DateTime          @default(now())
-  transactionItems TransactionItem[] 
+  transactionItems TransactionItem[]
+  orderItems       OrderItem[]
 }
+
+// MODEL pro Objednávky
+model Order {
+  id        Int      @id @default(autoincrement())
+  total     Int
+  status    String   @default("PENDING") // PENDING, PAID, SHIPPED, CANCELED
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id])
+  clientId  Int
+
+  items     OrderItem[]
+}
+
+// MODEL pro Položky v objednávce
+model OrderItem {
+  id        Int   @id @default(autoincrement())
+  quantity  Int
+  price     Int   // Cena produktu v době nákupu
+
+  order     Order @relation(fields: [orderId], references: [id])
+  orderId   Int
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+}
+
 
 // Výčet rolí pro zaměstnance
 enum Role {
