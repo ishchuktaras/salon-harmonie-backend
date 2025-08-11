@@ -38,4 +38,10 @@ export class ClientsController {
   remove(@Param('id') id: string) {
     return this.clientsService.remove(+id);
   }
+
+  
+  @Get(':id/orders')
+  findOrders(@Param('id') id: string) {
+    return this.clientsService.findOrdersForClient(+id);
+  }
 }

@@ -1,7 +1,9 @@
 // src/calendar/calendar.controller.ts
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CalendarService } from './calendar.service';
 import { Public } from 'src/auth/public.decorator';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/users/enums/role.enum';
 
 @Controller('calendar')
 export class CalendarController {
@@ -12,8 +14,18 @@ export class CalendarController {
   getAvailability(
     @Query('therapistId') therapistId: string,
     @Query('serviceId') serviceId: string,
-    @Query('date') date: string, // např. "2025-08-20"
+    @Query('date') date: string,
   ) {
     return this.calendarService.getAvailability(+therapistId, +serviceId, date);
+  }
+
+  // --- NOVÝ ENDPOINT PRO ZOBRAZENÍ KALENDÁŘE PRO MANAGERY ---
+  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
+  @Get('manager-view')
+  getManagerView(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.calendarService.getManagerView(startDate, endDate);
   }
 }

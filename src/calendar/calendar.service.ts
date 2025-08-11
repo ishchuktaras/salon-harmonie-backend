@@ -43,7 +43,6 @@ export class CalendarService {
       return []; // Terapeut v tento den nepracuje, vrátíme prázdné pole
     }
 
-    // TOTO JE KLÍČOVÁ OPRAVA: Explicitně definujeme typ pole
     const availableSlots: string[] = [];
     const dayStart = parse(workSchedule.startTime, 'HH:mm', requestedDate);
     const dayEnd = parse(workSchedule.endTime, 'HH:mm', requestedDate);
@@ -77,5 +76,37 @@ export class CalendarService {
     }
 
     return availableSlots;
+  }
+
+  // --- NOVÝ ENDPOINT PRO ZOBRAZENÍ KALENDÁŘE PRO MANAGERY ---
+  async getManagerView(startDate: string, endDate: string) {
+    const therapists = await this.prisma.user.findMany({
+      where: {
+        role: {
+          in: ['TERAPEUT', 'MASER'],
+        },
+      },
+      include: {
+        reservationsAsTherapist: {
+          where: {
+            startTime: {
+              gte: new Date(startDate),
+            },
+            endTime: {
+              lte: new Date(endDate),
+            },
+          },
+          include: {
+            client: true,
+            service: true,
+          },
+        },
+      },
+    });
+
+    return therapists.map((therapist) => {
+      const { passwordHash, ...result } = therapist;
+      return result;
+    });
   }
 }

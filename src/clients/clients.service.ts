@@ -8,11 +8,10 @@ import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { AbraFlexiService } from 'src/abra-flexi/abra-flexi.service'; // <-- Přidali jsme import
+import { AbraFlexiService } from 'src/abra-flexi/abra-flexi.service';
 
 @Injectable()
 export class ClientsService {
-  // Upravili jsme konstruktor, aby si "vstříknul" novou službu
   constructor(
     private prisma: PrismaService,
     private abraFlexiService: AbraFlexiService,
@@ -24,9 +23,7 @@ export class ClientsService {
         data: createClientDto,
       });
 
-      // TOTO JE NOVÁ ČÁST: Zavoláme naši novou funkci pro synchronizaci
       await this.abraFlexiService.createClientInAbraFlexi(newClient);
-
       return newClient;
     } catch (error) {
       if (
@@ -60,5 +57,24 @@ export class ClientsService {
 
   remove(id: number) {
     return this.prisma.client.delete({ where: { id } });
+  }
+
+  
+  async findOrdersForClient(id: number) {
+    return this.prisma.order.findMany({
+      where: {
+        clientId: id,
+      },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 }

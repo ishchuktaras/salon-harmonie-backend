@@ -1,21 +1,18 @@
 // src/reservations/reservations.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { MailService } from 'src/mail/mail.service'; 
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class ReservationsService {
-  // Upravili jsme konstruktor, aby si "vstříknul" novou službu
   constructor(
     private prisma: PrismaService,
     private mailService: MailService,
   ) {}
 
   async create(createReservationDto: CreateReservationDto) {
-    // Vytvoříme rezervaci a rovnou si načteme i propojená data,
-    // která potřebujeme pro e-mail (klient, služba, terapeut).
     const newReservation = await this.prisma.reservation.create({
       data: createReservationDto,
       include: {
@@ -25,9 +22,7 @@ export class ReservationsService {
       },
     });
 
-    // Zavoláme naši novou funkci pro odeslání e-mailu
     await this.mailService.sendReservationConfirmation(newReservation);
-
     return newReservation;
   }
 
@@ -52,11 +47,19 @@ export class ReservationsService {
     });
   }
 
-  findOne(id: number) {
-    return this.prisma.reservation.findUnique({ where: { id } });
+  async findOne(id: number) {
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id },
+    });
+    if (!reservation) {
+      throw new NotFoundException(`Rezervace s ID ${id} nebyla nalezena.`);
+    }
+    return reservation;
   }
 
-  update(id: number, updateReservationDto: UpdateReservationDto) {
+  // --- TUTO METODU VYLEPŠUJEME ---
+  async update(id: number, updateReservationDto: UpdateReservationDto) {
+    // Zde by v budoucnu měla být i kontrola, jestli nový čas nekoliduje s jinou rezervací
     return this.prisma.reservation.update({
       where: { id },
       data: updateReservationDto,
