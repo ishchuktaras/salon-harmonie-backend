@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AbraFlexiService } from 'src/abra-flexi/abra-flexi.service';
+import { Transaction } from '@prisma/client'; // <-- PŘIDALI JSME IMPORT
 
 @Injectable()
 export class ReportsService {
@@ -38,7 +39,8 @@ export class ReportsService {
       0,
     );
 
-    const transactionIds = transactionsToClose.map((t) => t.id);
+    // TOTO JE KLÍČOVÁ OPRAVA: Explicitně definujeme typ parametru 't'
+    const transactionIds = transactionsToClose.map((t: Transaction) => t.id);
 
     await this.prisma.transaction.updateMany({
       where: {
