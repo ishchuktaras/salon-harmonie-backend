@@ -57,7 +57,6 @@ export class ReservationsService {
     return reservation;
   }
 
-  // --- TUTO METODU VYLEPŠUJEME ---
   async update(id: number, updateReservationDto: UpdateReservationDto) {
     // Zde by v budoucnu měla být i kontrola, jestli nový čas nekoliduje s jinou rezervací
     return this.prisma.reservation.update({
