@@ -1,3 +1,5 @@
+# backend/Dockerfile
+
 # Použijeme Node.js v20 jako základní obraz
 FROM node:20-alpine
 
