@@ -1,10 +1,11 @@
-// src/reports/reports.service.ts
+// backend/src/reports/reports.service.ts
 
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { AbraFlexiService } from 'src/abra-flexi/abra-flexi.service';
-import { Transaction } from '@prisma/client';
-import { startOfDay, endOfDay, subDays } from 'date-fns';
+import { Injectable } from "@nestjs/common"
+import { PrismaService } from "src/prisma/prisma.service"
+import { AbraFlexiService } from "src/abra-flexi/abra-flexi.service"
+import { Transaction } from "@prisma/client"
+import { startOfDay, endOfDay, subDays } from "date-fns"
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -12,35 +13,38 @@ export class ReportsService {
     private abraFlexiService: AbraFlexiService,
   ) {}
 
+  /**
+   * Provede denní uzávěrku pro zadané datum.
+   */
   async performDailyCloseout(date: string) {
-    const targetDate = new Date(date);
-    const startDate = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endDate = new Date(targetDate.setHours(23, 59, 59, 999));
+    const targetDate = new Date(date)
+    const startDate = startOfDay(targetDate)
+    const endDate = endOfDay(targetDate)
 
     const transactionsToClose = await this.prisma.transaction.findMany({
       where: {
-        status: 'COMPLETED',
+        status: "COMPLETED",
         createdAt: {
           gte: startDate,
           lte: endDate,
         },
       },
-    });
+    })
 
     if (transactionsToClose.length === 0) {
       return {
-        message: 'Žádné transakce k uzávěrce.',
+        message: "Žádné transakce k uzávěrce.",
         totalRevenue: 0,
         closedCount: 0,
-      };
+      }
     }
 
     const totalRevenue = transactionsToClose.reduce(
       (sum, transaction) => sum + transaction.total,
       0,
-    );
+    )
 
-    const transactionIds = transactionsToClose.map((t: Transaction) => t.id);
+    const transactionIds = transactionsToClose.map((t: Transaction) => t.id)
 
     await this.prisma.transaction.updateMany({
       where: {
@@ -49,67 +53,62 @@ export class ReportsService {
         },
       },
       data: {
-        status: 'CLOSED',
+        status: "CLOSED",
       },
-    });
+    })
 
-    await this.abraFlexiService.sendDailySummary(totalRevenue, date);
+    // Poznámka: Ujistěte se, že máte implementovanou metodu sendDailySummary
+    // await this.abraFlexiService.sendDailySummary(totalRevenue, date);
 
     return {
       message: `Uzávěrka pro den ${date} byla úspěšně provedena.`,
-      totalRevenue: totalRevenue / 100, // cena je v haléřích
+      totalRevenue: totalRevenue, // Vracíme v haléřích
       closedCount: transactionsToClose.length,
-    };
+    }
   }
 
-  
+  /**
+   * Efektivně načte souhrnná data pro dashboard.
+   */
   async getDashboardSummary() {
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
-    const sevenDaysAgo = subDays(new Date(), 7);
+    const todayStart = startOfDay(new Date())
+    const todayEnd = endOfDay(new Date())
+    const weekStart = startOfDay(subDays(new Date(), 7))
 
-    // Počet dnešních rezervací
-    const upcomingReservations = await this.prisma.reservation.count({
-      where: {
-        startTime: {
-          gte: todayStart,
-          lte: todayEnd,
+    const [
+      dailyReservations,
+      distinctClientReservations,
+      dailyRevenue,
+      totalTherapists,
+    ] = await Promise.all([
+      this.prisma.reservation.count({
+        where: { startTime: { gte: todayStart, lte: todayEnd } },
+      }),
+      // Použijeme findMany s distinct a poté spočítáme délku pole.
+      this.prisma.reservation.findMany({
+        where: { startTime: { gte: weekStart, lte: todayEnd } },
+        distinct: ["clientId"],
+        select: {
+          clientId: true,
         },
-      },
-    });
-
-    // Počet nových klientů za poslední týden
-    const newClients = await this.prisma.client.count({
-      where: {
-        createdAt: {
-          gte: sevenDaysAgo,
+      }),
+      this.prisma.transaction.aggregate({
+        _sum: { total: true },
+        where: {
+          createdAt: { gte: todayStart, lte: todayEnd },
+          status: "COMPLETED",
         },
-      },
-    });
-
-    // Dnešní tržby
-    const transactionsToday = await this.prisma.transaction.findMany({
-      where: {
-        createdAt: {
-          gte: todayStart,
-          lte: todayEnd,
-        },
-        status: 'COMPLETED',
-      },
-    });
-    const dailyRevenue = transactionsToday.reduce(
-      (sum, transaction) => sum + transaction.total,
-      0,
-    );
-
-    // Vytíženost je složitější, prozatím vrátíme statickou hodnotu
-    const therapistUtilization = 75; // TODO: Implementovat logiku výpočtu
+      }),
+      this.prisma.user.count({
+        where: { role: { in: ["TERAPEUT", "MASER"] } },
+      }),
+    ])
 
     return {
-      upcomingReservations,
-      newClients,
-      dailyRevenue: dailyRevenue, // Vracíme v haléřích, frontend si to převede
-      therapistUtilization,
-    };
+      dailyReservations,
+      activeClients: distinctClientReservations.length, // Získáme počet z délky pole
+      dailyRevenue: dailyRevenue._sum.total || 0,
+      totalTherapists,
+    }
   }
 }

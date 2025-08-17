@@ -19,7 +19,7 @@ export class CalendarController {
     return this.calendarService.getAvailability(+therapistId, +serviceId, date);
   }
 
-  // --- NOVÝ ENDPOINT PRO ZOBRAZENÍ KALENDÁŘE PRO MANAGERY ---
+  // --- ENDPOINT PRO ZOBRAZENÍ KALENDÁŘE PRO MANAGERY ---
   @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
   @Get('manager-view')
   getManagerView(

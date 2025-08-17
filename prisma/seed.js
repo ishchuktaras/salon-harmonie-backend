@@ -1,43 +1,49 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
+// backend/prisma/seed.js
 
-const prisma = new PrismaClient();
+const { PrismaClient } = require("@prisma/client")
+const bcrypt = require("bcrypt")
+
+const prisma = new PrismaClient()
 
 async function main() {
-  console.log('--- Spouštím seed skript (JS verze) ---');
+  console.log("--- Spouštím seed skript ---")
 
-  const adminEmail = 'admin@salon-harmonie.cz';
-  const adminPassword = 'admin123';
+  const adminEmail = "admin@salon.cz"
+  const plainPassword = "admin123"
 
-  const adminExists = await prisma.user.findUnique({
+  // 1. Zkontrolujeme, zda admin již existuje
+  const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail },
-  });
+  })
 
-  if (adminExists) {
-    console.log('Admin uživatel již existuje. Nic nedělám.');
+  if (existingAdmin) {
+    console.log("Admin uživatel již existuje. Nic nedělám.")
   } else {
-    console.log('Vytvářím nového admin uživatele...');
-    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+    // 2. Pokud neexistuje, zahashujeme heslo
+    console.log(`Hashuji heslo: "${plainPassword}"`)
+    const hashedPassword = await bcrypt.hash(plainPassword, 10) // 10 je počet "salt rounds"
 
+    // 3. Vytvoříme nového admina se zahashovaným heslem
     await prisma.user.create({
       data: {
         email: adminEmail,
-        firstName: 'Admin',
-        lastName: 'Salon',
+        firstName: "Admin",
+        lastName: "Salon",
         passwordHash: hashedPassword,
-        role: 'ADMIN',
+        role: "SUPER_ADMIN",
       },
-    });
-    console.log('✅ Admin uživatel byl úspěšně vytvořen!');
+    })
+    console.log("✅ Nový admin uživatel byl úspěšně vytvořen.")
   }
+
+  console.log("--- Seed skript dokončen ---")
 }
 
 main()
   .catch((e) => {
-    console.error('!!! Chyba během seed skriptu:', e);
-    process.exit(1);
+    console.error(e)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-    console.log('--- Seed skript dokončen ---');
-  });
+    await prisma.$disconnect()
+  })
