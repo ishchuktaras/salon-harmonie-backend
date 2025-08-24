@@ -9,14 +9,19 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
+      whitelist: true, // Doporučené pro bezpečnost
       transform: true,
     }),
   );
 
-  // TATO CEDULKA POVOLÍ PŘÍSTUP Z JINÝCH ADRES (NAPŘ. Z NAŠEHO FRONTENDU)
-  app.enableCors();
+  // NASTAVENÍ CORS
+  app.enableCors({
+    origin: process.env.FRONTEND_URL, // Načítá adresu z Vercel proměnných
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
-  // Tento řádek zajišťuje, že server poslouchá na všech síťových rozhraních
-  await app.listen(3000, '0.0.0.0');
+  // Port pro Vercel není kritický, ale 3000 je standard
+  await app.listen(3000);
 }
 bootstrap();
