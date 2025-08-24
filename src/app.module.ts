@@ -16,8 +16,8 @@ import { ReportsModule } from "./reports/reports.module"
 import { OrdersModule } from "./orders/orders.module"
 import { PrismaModule } from "./prisma/prisma.module"
 import { ConfigModule } from "@nestjs/config"
-import { APP_GUARD } from "@nestjs/core" // <-- DŮLEŽITÝ IMPORT
-import { JwtAuthGuard } from "./auth/jwt-auth.guard" // <-- DŮLEŽITÝ IMPORT
+import { APP_GUARD } from "@nestjs/core" 
+import { JwtAuthGuard } from "./auth/jwt-auth.guard" 
 import { RolesGuard } from "./auth/roles.guard"
 
 @Module({
@@ -37,7 +37,7 @@ import { RolesGuard } from "./auth/roles.guard"
     PrismaModule,
   ],
   controllers: [AppController],
-  // OPRAVA ZDE: Tímto nastavíme stráž jako globální pro celou aplikaci
+  
   providers: [
     AppService,
     {
