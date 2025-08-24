@@ -1,27 +1,36 @@
-// backend/src/main.ts
+// backend/src/main.ts - Dočasná verze pro testování
 
+import { Controller, Get, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 
+// 1. Jednoduchý Controller
+@Controller()
+class AppController {
+  @Get()
+  getHello(): string {
+    return 'Hello World from NestJS!';
+  }
+
+  @Get('test')
+  getTest(): object {
+    return { message: 'Test endpoint is working!' };
+  }
+}
+
+// 2. Jednoduchý Module
+@Module({
+  controllers: [AppController],
+})
+class AppModule {}
+
+// 3. Bootstrap Funkce
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Doporučené pro bezpečnost
-      transform: true,
-    }),
-  );
+  // Povolíme CORS pro všechny pro účely testu
+  app.enableCors(); 
 
-  // NASTAVENÍ CORS
-  app.enableCors({
-    origin: process.env.FRONTEND_URL, // Načítá adresu z Vercel proměnných
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
-
-  // Port pro Vercel není kritický, ale 3000 je standard
   await app.listen(3000);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
