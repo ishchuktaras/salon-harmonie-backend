@@ -4,8 +4,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
-import { Roles } from 'src/auth/roles.decorator';
-import { Role } from 'src/users/enums/role.enum';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../users/enums/role.enum';
 import { RolesGuard } from 'src/auth/roles.guard';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)

@@ -1,8 +1,8 @@
 // backend/src/reports/reports.service.ts
 
 import { Injectable } from "@nestjs/common"
-import { PrismaService } from "src/prisma/prisma.service"
-import { AbraFlexiService } from "src/abra-flexi/abra-flexi.service"
+import { PrismaService } from "../prisma/prisma.service"
+import { AbraFlexiService } from "../abra-flexi/abra-flexi.service"
 import { Transaction } from "@prisma/client"
 import { startOfDay, endOfDay, subDays } from "date-fns"
 

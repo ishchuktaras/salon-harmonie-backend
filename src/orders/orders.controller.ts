@@ -3,9 +3,9 @@ import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { Roles } from 'src/auth/roles.decorator';
-import { Role } from 'src/users/enums/role.enum';
-import { Public } from 'src/auth/public.decorator';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../users/enums/role.enum';
+import { Public } from '../auth/public.decorator';
 
 @Controller('orders')
 export class OrdersController {

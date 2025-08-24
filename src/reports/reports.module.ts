@@ -2,7 +2,7 @@
 import { Module } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { ReportsController } from './reports.controller';
-import { AbraFlexiModule } from 'src/abra-flexi/abra-flexi.module';
+import { AbraFlexiModule } from '../abra-flexi/abra-flexi.module';
 
 @Module({
   imports: [AbraFlexiModule],

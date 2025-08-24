@@ -13,9 +13,9 @@ import type { Response } from 'express'; // <-- TOTO JE KLÍČOVÁ OPRAVA
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Roles } from 'src/auth/roles.decorator';
-import { Role } from 'src/users/enums/role.enum';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../users/enums/role.enum';
 import { AddTransactionItemDto } from './dto/add-item.dto';
 
 @UseGuards(AuthGuard('jwt'), RolesGuard)

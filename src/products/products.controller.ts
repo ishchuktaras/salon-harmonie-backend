@@ -3,9 +3,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Roles } from 'src/auth/roles.decorator';
-import { Role } from 'src/users/enums/role.enum';
-import { Public } from 'src/auth/public.decorator';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../users/enums/role.enum';
+import { Public } from '../auth/public.decorator';
 
 @Controller('products')
 export class ProductsController {
