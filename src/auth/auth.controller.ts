@@ -9,7 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Public } from 'src/auth/public.decorator'; // <-- Přidejte tento import
+import { Public } from '../auth/public.decorator';
 
 @Controller('auth')
 export class AuthController {

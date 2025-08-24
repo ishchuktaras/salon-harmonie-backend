@@ -1,9 +1,9 @@
 // src/calendar/calendar.controller.ts
 import { Controller, Get, Query } from '@nestjs/common';
 import { CalendarService } from './calendar.service';
-import { Public } from 'src/auth/public.decorator';
-import { Roles } from 'src/auth/roles.decorator';
-import { Role } from 'src/users/enums/role.enum';
+import { Public } from '../auth/public.decorator';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '../users/enums/role.enum';
 
 @Controller('calendar')
 export class CalendarController {
