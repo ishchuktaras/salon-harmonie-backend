@@ -14,7 +14,7 @@ export class AuthService {
     console.log(`--- Pokus o validaci uživatele: ${email} ---`);
     const user = await this.usersService.findOneByEmail(email);
 
-    // OPRAVA: Použijeme bcrypt.compare pro bezpečné porovnání hesla
+    // Použijeme bcrypt.compare pro bezpečné porovnání hesla
     if (user && (await bcrypt.compare(pass, user.passwordHash))) {
       const { passwordHash, ...result } = user;
       return result;
