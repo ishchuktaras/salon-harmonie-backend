@@ -1,182 +1,133 @@
-// src/transactions/transactions.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { PrismaService } from '../prisma/prisma.service';
+// Změna zde: Importujeme správný název DTO
 import { AddTransactionItemDto } from './dto/add-item.dto';
+import { PohodaService } from '../pohoda/pohoda.service';
+import { Client, Transaction, TransactionItem } from '@prisma/client';
+
+// Pomocný typ, který zaručuje, že transakce obsahuje i relace
+type TransactionWithDetails = Transaction & {
+  items: TransactionItem[];
+  client: Client;
+};
 
 @Injectable()
 export class TransactionsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(TransactionsService.name);
 
-  async createFromReservation(dto: CreateTransactionDto) {
-    const reservation = await this.prisma.reservation.findUnique({
-      where: { id: dto.reservationId },
-      include: {
-        service: true,
-      },
-    });
+  constructor(
+    private prisma: PrismaService,
+    private pohodaService: PohodaService,
+  ) {}
 
-    if (!reservation || !reservation.service) {
-      throw new NotFoundException(
-        'Rezervace nebo související služba nenalezena',
-      );
-    }
+  async create(
+    createTransactionDto: CreateTransactionDto,
+  ): Promise<TransactionWithDetails> {
+    const { items, ...transactionData } = createTransactionDto;
 
-    const { service } = reservation;
-
-    return this.prisma.transaction.create({
+    // Krok 1: Vytvoření transakce v lokální databázi
+    const newTransaction = await this.prisma.transaction.create({
       data: {
-        total: service.price,
-        paymentMethod: dto.paymentMethod,
-        clientId: reservation.clientId,
-        reservationId: reservation.id,
+        ...transactionData,
         items: {
-          create: {
-            name: service.name,
-            price: service.price,
-            serviceId: service.id,
-          },
+          create: items.map((item) => ({
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            productId: item.productId,
+            serviceId: item.serviceId,
+          })),
         },
       },
-      include: {
-        items: true,
-      },
-    });
-  }
-
-  async addItem(transactionId: number, dto: AddTransactionItemDto) {
-    const product = await this.prisma.product.findUnique({
-      where: { id: dto.productId },
-    });
-
-    if (!product) {
-      throw new NotFoundException('Produkt nenalezen');
-    }
-
-    await this.prisma.transactionItem.create({
-      data: {
-        name: product.name,
-        price: product.price,
-        quantity: dto.quantity,
-        productId: dto.productId,
-        transactionId: transactionId,
-      },
-    });
-
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { id: transactionId },
-      include: { items: true },
-    });
-
-    if (!transaction) {
-      throw new NotFoundException('Transakce po přidání položky nenalezena.');
-    }
-
-    const total = transaction.items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-
-    return this.prisma.transaction.update({
-      where: { id: transactionId },
-      data: { total },
-      include: { items: true },
-    });
-  }
-
-  findAll() {
-    return this.prisma.transaction.findMany({ include: { items: true } });
-  }
-
-  findOne(id: number) {
-    return this.prisma.transaction.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-  }
-
-  update(id: number, updateTransactionDto: UpdateTransactionDto) {
-    return `This action updates a #${id} transaction`;
-  }
-
-  remove(id: number) {
-    return this.prisma.transaction.delete({ where: { id } });
-  }
-
-  // --- TATO METODA CHYBĚLA ---
-  async generateReceiptHtml(id: number): Promise<string> {
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { id },
       include: {
         items: true,
         client: true,
       },
     });
 
-    if (!transaction) {
-      throw new NotFoundException(`Transakce s ID ${id} nebyla nalezena.`);
+    // Krok 2: Pokus o synchronizaci transakce do Pohody jako prodejka
+    try {
+      this.logger.log(
+        `Attempting to sync transaction ${newTransaction.id} to Pohoda.`,
+      );
+      const pohodaId = await this.pohodaService.createInvoice(newTransaction);
+
+      // Krok 3: Aktualizace transakce v lokální DB s ID z Pohody
+      if (pohodaId) {
+        return await this.prisma.transaction.update({
+          where: { id: newTransaction.id },
+          data: { pohodaId: pohodaId },
+          include: {
+            items: true,
+            client: true,
+          },
+        });
+      }
+    } catch (error) {
+      // Pokud synchronizace selže, zalogujeme chybu, ale transakce zůstane v našem systému.
+      this.logger.error(
+        `Failed to sync new transaction ${newTransaction.id} to Pohoda. Transaction remains in local DB without pohodaId.`,
+        error.stack,
+      );
     }
 
-    const itemsHtml = transaction.items
-      .map(
-        (item) => `
-      <tr>
-        <td>${item.name}</td>
-        <td>${item.quantity}</td>
-        <td>${(item.price / 100).toFixed(2)} Kč</td>
-        <td>${((item.price * item.quantity) / 100).toFixed(2)} Kč</td>
-      </tr>
-    `,
-      )
-      .join('');
+    return newTransaction;
+  }
 
-    const receiptHtml = `
-      <!DOCTYPE html>
-      <html lang="cs">
-      <head>
-        <meta charset="UTF-8">
-        <title>Účtenka č. ${transaction.id}</title>
-        <style>
-          body { font-family: sans-serif; margin: 20px; }
-          .receipt { width: 300px; border: 1px solid #ccc; padding: 15px; }
-          h1 { text-align: center; margin-top: 0; }
-          table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-          th, td { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
-          .total { font-weight: bold; font-size: 1.2em; text-align: right; margin-top: 15px; }
-        </style>
-      </head>
-      <body>
-        <div class="receipt">
-          <h1>Salon Harmonie</h1>
-          <p><strong>Datum:</strong> ${new Date(
-            transaction.createdAt,
-          ).toLocaleString('cs-CZ')}</p>
-          <p><strong>Zákazník:</strong> ${transaction.client.firstName} ${
-            transaction.client.lastName
-          }</p>
-          <p><strong>Doklad č.:</strong> ${transaction.id}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>Položka</th>
-                <th>Ks</th>
-                <th>Cena/ks</th>
-                <th>Celkem</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          <div class="total">
-            Celkem k úhradě: ${(transaction.total / 100).toFixed(2)} Kč
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+  findAll() {
+    return this.prisma.transaction.findMany({
+      include: { client: true, items: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
-    return receiptHtml;
+  async findOne(id: number) {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        reservation: true,
+      },
+    });
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${id} not found`);
+    }
+    return transaction;
+  }
+
+  update(id: number, updateTransactionDto: UpdateTransactionDto) {
+    // Rozšíření: updateTransactionDto pravděpodobně také obsahuje 'items'
+    const { items, ...transactionData } = updateTransactionDto;
+    return this.prisma.transaction.update({
+      where: { id },
+      data: {
+        ...transactionData,
+        // TODO: Implementovat logiku pro aktualizaci položek (smazání starých a vytvoření nových)
+      },
+    });
+  }
+
+  remove(id: number) {
+    // Pozor: Toto smaže transakci jen v lokální DB. V Pohodě zůstane.
+    return this.prisma.transaction.delete({ where: { id } });
+  }
+
+  // Změna zde: Používáme správný název DTO
+  async addItem(transactionId: number, addItemDto: AddTransactionItemDto) {
+    // TODO: Přidat logiku pro přepočítání celkové ceny transakce
+    return this.prisma.transactionItem.create({
+      data: {
+        transactionId,
+        ...addItemDto,
+      },
+    });
   }
 }
+

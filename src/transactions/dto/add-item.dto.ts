@@ -1,12 +1,24 @@
-// src/transactions/dto/add-item.dto.ts
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class AddTransactionItemDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
   @IsInt()
   @IsNotEmpty()
-  productId: number;
+  price: number;
 
   @IsInt()
   @IsNotEmpty()
   quantity: number;
+
+  @IsInt()
+  @IsOptional()
+  productId?: number;
+
+  @IsInt()
+  @IsOptional()
+  serviceId?: number;
 }
+

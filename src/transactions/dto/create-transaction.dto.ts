@@ -1,15 +1,36 @@
-// src/transactions/dto/create-transaction.dto.ts
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+// Změna zde: Importujeme správný název třídy
+import { AddTransactionItemDto } from './add-item.dto';
 
 export class CreateTransactionDto {
   @IsInt()
   @IsNotEmpty()
-  reservationId: number;
+  total: number;
 
   @IsString()
   @IsNotEmpty()
   paymentMethod: string;
 
-  // Položky se přidají automaticky, ale můžeme je přidávat i ručně
-  // To doděláme později
+  @IsInt()
+  @IsNotEmpty()
+  clientId: number;
+
+  @IsInt()
+  @IsOptional()
+  reservationId?: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  // Změna zde: Používáme správný název třídy
+  @Type(() => AddTransactionItemDto)
+  items: AddTransactionItemDto[];
 }
+

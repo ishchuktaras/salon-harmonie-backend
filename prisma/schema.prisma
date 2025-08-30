@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 // Tento blok definuje připojení k databázi.
 datasource db {
   provider = "postgresql"
@@ -34,11 +37,12 @@ model Client {
   firstName    String
   lastName     String
   phone        String?
+  pohodaId     String?       @unique
   createdAt    DateTime      @default(now())
   // Vztahy
   reservations Reservation[] @relation("ClientReservations")
   transactions Transaction[]
-  orders       Order[] 
+  orders       Order[]
 }
 
 // Model pro rezervace
@@ -80,6 +84,7 @@ model Transaction {
   createdAt     DateTime          @default(now())
   clientId      Int
   client        Client            @relation(fields: [clientId], references: [id])
+  pohodaId      String?           @unique
   reservationId Int?              @unique
   reservation   Reservation?      @relation(fields: [reservationId], references: [id])
   items         TransactionItem[]
@@ -91,6 +96,7 @@ model TransactionItem {
   name          String
   price         Int
   quantity      Int         @default(1)
+  pohodaId      String?     @unique
   transactionId Int
   transaction   Transaction @relation(fields: [transactionId], references: [id])
   serviceId     Int?
@@ -125,6 +131,7 @@ model Product {
   description      String?
   price            Int
   stockQuantity    Int               @default(0)
+  pohodaId         String?           @unique
   createdAt        DateTime          @default(now())
   transactionItems TransactionItem[]
   orderItems       OrderItem[]
@@ -137,25 +144,24 @@ model Order {
   status    String   @default("PENDING") // PENDING, PAID, SHIPPED, CANCELED
   createdAt DateTime @default(now())
 
-  client    Client   @relation(fields: [clientId], references: [id])
-  clientId  Int
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId Int
 
-  items     OrderItem[]
+  items OrderItem[]
 }
 
 // MODEL pro Položky v objednávce
 model OrderItem {
-  id        Int   @id @default(autoincrement())
-  quantity  Int
-  price     Int   // Cena produktu v době nákupu
+  id       Int @id @default(autoincrement())
+  quantity Int
+  price    Int // Cena produktu v době nákupu
 
-  order     Order @relation(fields: [orderId], references: [id])
-  orderId   Int
+  order   Order @relation(fields: [orderId], references: [id])
+  orderId Int
 
   product   Product @relation(fields: [productId], references: [id])
   productId Int
 }
-
 
 // Výčet rolí pro zaměstnance
 enum Role {
@@ -169,3 +175,4 @@ enum Role {
   MANAGER
   ESHOP_SPRAVCE
 }
+
