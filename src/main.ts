@@ -14,14 +14,19 @@ async function bootstrap() {
     }),
   );
 
-  // NASTAVENÍ CORS
+  // --- CORS ---
+  // Povolíme přístup pro specifickou doménu frontendu.
+  // V produkci je důležité nepoužívat "*", ale konkrétní URL.
   app.enableCors({
-    origin: process.env.FRONTEND_URL, // Načítá adresu z Vercel proměnných
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: process.env.FRONTEND_URL || 'https://salon-harmonie-frontend.vercel.app',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
+  // -------------------
 
   // Port pro Vercel není kritický, ale 3000 je standard
-  await app.listen(3000);
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
