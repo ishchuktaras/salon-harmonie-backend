@@ -18,7 +18,10 @@ async function bootstrap() {
   // Povolíme přístup pro specifickou doménu frontendu.
   // V produkci je důležité nepoužívat "*", ale konkrétní URL.
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'https://salon-harmonie-frontend.vercel.app',
+    origin: [
+      'https://salon-harmonie-frontend.vercel.app', // Povolení pro produkční frontend
+      'http://localhost:3000',                      // Povolení pro lokální vývoj
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
