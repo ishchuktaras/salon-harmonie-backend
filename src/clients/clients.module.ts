@@ -3,9 +3,9 @@ import { Module } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { ClientsController } from './clients.controller';
 import { AuthModule } from 'src/auth/auth.module';
-import { AbraFlexiModule } from '../abra-flexi/abra-flexi.module'; 
+
 @Module({
-  imports: [AuthModule, AbraFlexiModule],
+  imports: [AuthModule],
   controllers: [ClientsController],
   providers: [ClientsService],
 })

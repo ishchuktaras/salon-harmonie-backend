@@ -1,5 +1,14 @@
 // src/clients/clients.controller.ts
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
@@ -37,11 +46,5 @@ export class ClientsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.clientsService.remove(+id);
-  }
-
-  
-  @Get(':id/orders')
-  findOrders(@Param('id') id: string) {
-    return this.clientsService.findOrdersForClient(+id);
   }
 }

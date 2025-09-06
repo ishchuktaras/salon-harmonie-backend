@@ -23,12 +23,6 @@ import { AddTransactionItemDto } from './dto/add-item.dto';
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
-  @Roles(Role.RECEPCNI, Role.MANAGER, Role.ADMIN)
-  @Post()
-  create(@Body() createTransactionDto: CreateTransactionDto) {
-    return this.transactionsService.createFromReservation(createTransactionDto);
-  }
-
   @Get()
   findAll() {
     return this.transactionsService.findAll();
@@ -52,12 +46,5 @@ export class TransactionsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.transactionsService.remove(+id);
-  }
-
-  @Get(':id/receipt')
-  async getReceipt(@Param('id') id: string, @Res() res: Response) {
-    const html = await this.transactionsService.generateReceiptHtml(+id);
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
   }
 }

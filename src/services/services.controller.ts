@@ -13,7 +13,7 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 // Poznámka: AuthGuard('jwt') je v pořádku, ale globální JwtAuthGuard je často čistší řešení.
 import { AuthGuard } from '@nestjs/passport'; 
-import { RolesGuard } from 'src/auth/roles.guard';
+import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../users/enums/role.enum';
 import { Public } from '../auth/public.decorator';
