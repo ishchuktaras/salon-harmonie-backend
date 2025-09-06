@@ -1,0 +1,173 @@
+.
+├── Dockerfile
+├── eslint.config.mjs
+├── nest-cli.json
+├── package.json
+├── package-lock.json
+├── prisma
+│   ├── migrations
+│   │   ├── migration_lock.toml
+│   │   ├── 20250803144759_init
+│   │   │   └── migration.sql
+│   │   ├── 20250803145734_removed_default_role
+│   │   │   └── migration.sql
+│   │   ├── 20250806151550_add_service_model
+│   │   │   └── migration.sql
+│   │   ├── 20250806172117_link_users_services
+│   │   │   └── migration.sql
+│   │   ├── 20250807185729_add_schedule_and_blocks
+│   │   │   └── migration.sql
+│   │   ├── 20250808173703_add_pos_models
+│   │   │   └── migration.sql
+│   │   ├── 20250808183528_add_product_model
+│   │   │   └── migration.sql
+│   │   ├── 20250809072421_add_transaction_status
+│   │   │   └── migration.sql
+│   │   ├── 20250810091331_add_order_models
+│   │   │   └── migration.sql
+│   │   └── 20250830095218_add_pohoda_ids
+│   │       └── migration.sql
+│   ├── seed.js
+│   └── schema.prisma
+├── project-structure.txt
+├── README.md
+├── src
+│   ├── app.controller.spec.ts
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   ├── app.service.ts
+│   ├── auth
+│   │   ├── auth.controller.spec.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.module.ts
+│   │   ├── auth.service.spec.ts
+│   │   ├── auth.service.ts
+│   │   ├── jwt-auth.guard.ts
+│   │   ├── jwt.strategy.ts
+│   │   ├── public.decorator.ts
+│   │   ├── roles.decorator.ts
+│   │   └── roles.guard.ts
+│   ├── calendar
+│   │   ├── calendar.controller.spec.ts
+│   │   ├── calendar.controller.ts
+│   │   ├── calendar.module.ts
+│   │   ├── calendar.service.spec.ts
+│   │   └── calendar.service.ts
+│   ├── clients
+│   │   ├── clients.controller.spec.ts
+│   │   ├── clients.controller.ts
+│   │   ├── clients.module.ts
+│   │   ├── clients.service.spec.ts
+│   │   ├── clients.service.ts
+│   │   ├── dto
+│   │   │   ├── create-client.dto.ts
+│   │   │   └── update-client.dto.ts
+│   │   └── entities
+│   │       └── client.entity.ts
+│   ├── mail
+│   │   ├── mail.module.ts
+│   │   ├── mail.service.spec.ts
+│   │   └── mail.service.ts
+│   ├── main.ts
+│   ├── orders
+│   │   ├── dto
+│   │   │   ├── create-order.dto.ts
+│   │   │   └── update-order.dto.ts
+│   │   ├── entities
+│   │   │   └── order.entity.ts
+│   │   ├── orders.controller.spec.ts
+│   │   ├── orders.controller.ts
+│   │   ├── orders.module.ts
+│   │   ├── orders.service.spec.ts
+│   │   └── orders.service.ts
+│   ├── pohoda
+│   │   ├── pohoda.module.ts
+│   │   └── pohoda.service.ts
+│   ├── prisma
+│   │   ├── prisma.module.ts
+│   │   ├── prisma.service.spec.ts
+│   │   └── prisma.service.ts
+│   ├── products
+│   │   ├── dto
+│   │   │   ├── create-product.dto.ts
+│   │   │   └── update-product.dto.ts
+│   │   ├── entities
+│   │   │   └── product.entity.ts
+│   │   ├── products.controller.spec.ts
+│   │   ├── products.controller.ts
+│   │   ├── products.module.ts
+│   │   ├── products.service.spec.ts
+│   │   └── products.service.ts
+│   ├── reports
+│   │   ├── reports.controller.spec.ts
+│   │   ├── reports.controller.ts
+│   │   ├── reports.module.ts
+│   │   ├── reports.service.spec.ts
+│   │   └── reports.service.ts
+│   ├── reservations
+│   │   ├── dto
+│   │   │   ├── create-reservation.dto.ts
+│   │   │   └── update-reservation.dto.ts
+│   │   ├── entities
+│   │   │   └── reservation.entity.ts
+│   │   ├── reservations.controller.spec.ts
+│   │   ├── reservations.controller.ts
+│   │   ├── reservations.module.ts
+│   │   ├── reservations.service.spec.ts
+│   │   └── reservations.service.ts
+│   ├── services
+│   │   ├── dto
+│   │   │   ├── create-service.dto.ts
+│   │   │   └── update-service.dto.ts
+│   │   ├── entities
+│   │   │   └── service.entity.ts
+│   │   ├── services.controller.spec.ts
+│   │   ├── services.controller.ts
+│   │   ├── services.module.ts
+│   │   ├── services.service.spec.ts
+│   │   └── services.service.ts
+│   ├── schedule
+│   │   ├── dto
+│   │   │   ├── create-schedule.dto.ts
+│   │   │   ├── create-time-block.dto.ts
+│   │   │   └── update-schedule.dto.ts
+│   │   ├── entities
+│   │   │   └── schedule.entity.ts
+│   │   ├── schedule.controller.spec.ts
+│   │   ├── schedule.controller.ts
+│   │   ├── schedule.module.ts
+│   │   ├── schedule.service.spec.ts
+│   │   └── schedule.service.ts
+│   ├── transactions
+│   │   ├── dto
+│   │   │   ├── add-item.dto.ts
+│   │   │   ├── create-transaction.dto.ts
+│   │   │   └── update-transaction.dto.ts
+│   │   ├── entities
+│   │   │   └── transaction.entity.ts
+│   │   ├── transactions.controller.spec.ts
+│   │   ├── transactions.controller.ts
+│   │   ├── transactions.module.ts
+│   │   ├── transactions.service.spec.ts
+│   │   └── transactions.service.ts
+│   └── users
+│       ├── dto
+│       │   ├── create-user.dto.ts
+│       │   └── update-user.dto.ts
+│       ├── entities
+│       │   └── user.entity.ts
+│       ├── enums
+│       │   └── role.enum.ts
+│       ├── users.controller.spec.ts
+│       ├── users.controller.ts
+│       ├── users.module.ts
+│       ├── users.service.spec.ts
+│       └── users.service.ts
+├── test
+│   ├── app.e2e-spec.ts
+│   └── jest-e2e.json
+├── tsconfig.build.json
+├── tsconfig.json
+└── vercel.json
+
+46 directories, 125 files
