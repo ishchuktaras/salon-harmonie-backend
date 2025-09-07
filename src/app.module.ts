@@ -1,8 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config'; // Ujistěte se, že import je zde
+import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { HttpModule } from '@nestjs/axios';
-
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -23,12 +22,11 @@ import { PohodaModule } from './pohoda/pohoda.module';
 
 @Module({
   imports: [
-    // --- OPRAVA ZDE: ConfigModule musí být úplně první ---
+   
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
     }),
-    // ----------------------------------------------------
     PohodaModule,
     UsersModule,
     AuthModule,
@@ -47,6 +45,7 @@ import { PohodaModule } from './pohoda/pohoda.module';
   controllers: [AppController],
   providers: [
     AppService,
+    // Globální guardy zajišťují, že všechny endpointy jsou standardně chráněné.
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
