@@ -5,41 +5,27 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Vylepšené logování pro produkci
-  app.useLogger(console);
-
-  // Ponecháváme CORS nastavení i v aplikaci jako zálohu
-  const whitelist = [
-    'https://salon-harmonie-frontend.vercel.app',
-    'http://localhost:3000',
-    'http://localhost:3001',
-  ];
+  // CORS řešení
   app.enableCors({
-    origin: function (origin, callback) {
-      if (!origin || whitelist.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: 'https://salon-harmonie-frontend.vercel.app',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
   });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      transform: true,
-    }),
-  );
+  // Middleware pro OPTIONS (fallback)
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      res.header('Access-Control-Allow-Origin', 'https://salon-harmonie-frontend.vercel.app');
+      res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      return res.sendStatus(204);
+    }
+    next();
+  });
 
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`✅ Aplikace úspěšně nastartovala na portu: ${port}`);
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  await app.listen(process.env.PORT || 3000);
 }
-
-bootstrap().catch(err => {
-  // Kritické logování: Pokud aplikace spadne při startu, uvidíme to zde!
-  console.error('❌ Kritická chyba při startu aplikace:', err);
-  process.exit(1);
-});
+bootstrap();
