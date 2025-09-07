@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config'; // Ujistěte se, že import je zde
+import { APP_GUARD } from '@nestjs/core';
+import { HttpModule } from '@nestjs/axios';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -13,17 +17,19 @@ import { ProductsModule } from './products/products.module';
 import { ReportsModule } from './reports/reports.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
 import { PohodaModule } from './pohoda/pohoda.module';
-import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    // --- OPRAVA ZDE: ConfigModule musí být úplně první ---
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+    }),
+    // ----------------------------------------------------
     PohodaModule,
-    ConfigModule.forRoot({ isGlobal: true }),
     UsersModule,
     AuthModule,
     ClientsModule,
@@ -39,7 +45,6 @@ import { HttpModule } from '@nestjs/axios';
     HttpModule,
   ],
   controllers: [AppController],
-
   providers: [
     AppService,
     {
@@ -53,4 +58,3 @@ import { HttpModule } from '@nestjs/axios';
   ],
 })
 export class AppModule {}
-

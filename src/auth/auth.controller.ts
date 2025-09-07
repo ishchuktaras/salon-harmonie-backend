@@ -1,15 +1,14 @@
-// src/auth/auth.controller.ts
 import {
   Controller,
   Post,
   Body,
   Request,
-  UseGuards,
   Get,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Public } from '../auth/public.decorator';
+import { Public } from './public.decorator';
+import { LoginDto } from './dto/login.dto'; 
 
 @Controller('auth')
 export class AuthController {
@@ -17,16 +16,21 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  async login(@Body() body) {
-    const user = await this.authService.validateUser(body.email, body.password);
+  async login(@Body() loginDto: LoginDto) {
+    const user = await this.authService.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
     if (!user) {
       throw new UnauthorizedException('Neplatný e-mail nebo heslo.');
     }
     return this.authService.login(user);
   }
 
-  @Get('profile') // Tento endpoint zůstává chráněný, protože nemá @Public()
+  // Tento endpoint zůstává chráněný globálním guardem, protože nemá @Public()
+  @Get('profile')
   getProfile(@Request() req) {
+    // req.user je sem vložen po úspěšné validaci tokenu v JwtStrategy
     return req.user;
   }
 }
