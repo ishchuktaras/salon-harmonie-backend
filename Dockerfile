@@ -3,20 +3,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
-# Zkopírujeme package.json a package-lock.json
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# OPRAVA: Zkopírujeme Prisma schema PŘED instalací závislostí.
-# Tím zajistíme, že 'prisma generate' (v postinstall skriptu) najde schema.
+# Copy Prisma schema BEFORE installing dependencies
 COPY prisma ./prisma/
 
-# Nainstalujeme VŠECHNY závislosti (včetně vývojových jako je Prisma)
+# Install ALL dependencies (including dev dependencies like Prisma)
 RUN npm install
 
-# Zkopírujeme zbytek zdrojového kódu
+# Copy the rest of the source code
 COPY . .
-
-# Spustíme build aplikace
+# Build the application
 RUN npm run build
 
 
@@ -25,21 +23,23 @@ FROM node:20-alpine
 
 WORKDIR /usr/src/app
 
-# Zkopírujeme package.json a package-lock.json znovu
+# Copy package.json and package-lock.json again
 COPY package*.json ./
 
-# Nainstalujeme POUZE produkční závislosti
-RUN npm install --only=production
-
-# Zkopírujeme sestavenou aplikaci z 'builder' stage
-COPY --from=builder /usr/src/app/dist ./dist
-
-# Zkopírujeme Prisma schema a vygenerovaného klienta,
-# abychom mohli v produkci spouštět migrace.
+# --- COPY PRISMA SCHEMA BEFORE INSTALLING ---
+# Copy the Prisma schema from the 'builder' stage. This makes it available
+# for the 'prisma generate' command in the postinstall script.
 COPY --from=builder /usr/src/app/prisma ./prisma
 
-# Otevřeme port, na kterém aplikace poběží
+# Now, install ONLY production dependencies.
+# The 'prisma generate' command will now succeed.
+RUN npm install --only=production
+
+# Copy the built application from the 'builder' stage
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Expose the port the application will run on
 EXPOSE 3000
 
-# Spustíme aplikaci
+# Start the application
 CMD ["node", "dist/main"]
