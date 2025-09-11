@@ -1,4 +1,3 @@
-// src/users/users.service.ts
 import {
   ConflictException,
   Injectable,
@@ -14,9 +13,6 @@ import { Prisma } from '@prisma/client';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Vytvoří nového uživatele a zahashuje jeho heslo.
-   */
   async create(createUserDto: CreateUserDto) {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(
@@ -27,93 +23,107 @@ export class UsersService {
     try {
       const user = await this.prisma.user.create({
         data: {
-          email: createUserDto.email,
-          firstName: createUserDto.firstName,
-          lastName: createUserDto.lastName,
-          role: createUserDto.role,
+          ...createUserDto,
           passwordHash: hashedPassword,
         },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+        },
       });
-
-      const { passwordHash, ...result } = user;
-      return result;
+      return user;
     } catch (error) {
-      // Zkontrolujeme, jestli se jedná o chybu duplicitního záznamu (kód P2002)
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
-        // Pokud ano, vrátíme hezkou chybu 409 Conflict
         throw new ConflictException('Uživatel s tímto e-mailem již existuje.');
       }
-      // Pokud je to jiná chyba, necháme ji projít dál
       throw error;
     }
   }
 
-  /**
-   * Vrátí všechny uživatele bez jejich hesel.
-   */
-  async findAll() {
-    const users = await this.prisma.user.findMany();
-    return users.map((user) => {
-      const { passwordHash, ...result } = user;
-      return result;
+  findAll() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      },
     });
   }
 
-  /**
-   * Najde jednoho uživatele podle ID, bez hesla.
-   */
   async findOne(id: number) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    const { passwordHash, ...result } = user;
-    return result;
-  }
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      },
+    });
 
-  /**
-   * Najde jednoho uživatele podle e-mailu, VČETNĚ hesla (pro účely přihlášení).
-   */
-  async findOneByEmail(email: string) {
-    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new NotFoundException(`User with email ${email} not found`);
+      throw new NotFoundException(`Uživatel s ID ${id} nebyl nalezen.`);
     }
     return user;
   }
 
-  /**
-   * Upraví data uživatele.
-   */
+  async findOneByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+
   async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.prisma.user.update({
+    const dataToUpdate: any = { ...updateUserDto };
+
+    if (updateUserDto.password) {
+      const saltRounds = 10;
+      dataToUpdate.passwordHash = await bcrypt.hash(
+        updateUserDto.password,
+        saltRounds,
+      );
+      delete dataToUpdate.password;
+    }
+
+    return this.prisma.user.update({
       where: { id },
-      data: updateUserDto,
+      data: dataToUpdate,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+      },
     });
-    const { passwordHash, ...result } = user;
-    return result;
   }
 
-  /**
-   * Smaže uživatele.
-   */
   async remove(id: number) {
-    const user = await this.prisma.user.delete({ where: { id } });
-    const { passwordHash, ...result } = user;
-    return result;
+    return this.prisma.user.delete({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+      },
+    });
   }
-
+  
   assignService(userId: number, serviceId: number) {
     return this.prisma.user.update({
       where: { id: userId },
       data: {
         services: {
-          connect: { id: serviceId }, // Propojíme existující službu
+          connect: { id: serviceId },
         },
       },
     });
   }
 }
+
