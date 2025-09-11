@@ -8,7 +8,7 @@ async function main() {
 
   const plainPassword = "admin123"
 
-  // ... (kód pro vytváření uživatelů zůstává stejný)
+  
   // 1. Vytvoření Super Admina (pokud neexistuje)
   const adminEmail = "admin@salon.cz"
   let adminUser = await prisma.user.findUnique({ where: { email: adminEmail } })
