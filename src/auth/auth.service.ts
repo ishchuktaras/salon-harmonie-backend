@@ -13,14 +13,29 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
-    console.log(`--- Pokus o validaci uživatele: ${email} ---`);
-    const user = await this.usersService.findOneByEmail(email);
+    // SPUSTÍME STOPKY
+    console.time('Login Validation'); 
 
-    // Použijeme bcrypt.compare pro bezpečné porovnání hesla
-    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
-      const { passwordHash, ...result } = user;
-      return result;
+    console.log(`--- Pokus o validaci uživatele: ${email} ---`);
+    
+    console.timeLog('Login Validation', 'Hledám uživatele v DB...');
+    const user = await this.usersService.findOneByEmail(email);
+    console.timeLog('Login Validation', 'Uživatel nalezen.');
+
+    if (user) {
+      console.timeLog('Login Validation', 'Porovnávám heslo pomocí bcrypt...');
+      const isPasswordMatching = await bcrypt.compare(pass, user.passwordHash);
+      console.timeLog('Login Validation', 'Porovnání hesla dokončeno.');
+
+      if (isPasswordMatching) {
+        // ZASTAVÍME STOPKY A VYPÍŠEME VÝSLEDEK
+        console.timeEnd('Login Validation');
+        const { passwordHash, ...result } = user;
+        return result;
+      }
     }
+    
+    console.timeEnd('Login Validation');
     return null;
   }
 
