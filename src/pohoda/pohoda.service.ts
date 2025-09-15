@@ -1,6 +1,4 @@
-// src/pohoda/pohoda.service.ts
-
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { Client, Transaction } from '@prisma/client';
@@ -10,24 +8,32 @@ import * as iconv from 'iconv-lite';
 import { AxiosResponse } from 'axios';
 
 @Injectable()
-export class PohodaService {
+export class PohodaService implements OnModuleInit {
   private readonly logger = new Logger(PohodaService.name);
-  private readonly pohodaUrl: string;
-  private readonly pohodaIco: string;
+  private pohodaUrl: string | undefined;
+  private pohodaIco: string | undefined;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
   ) {
-    const pohodaUrl = this.configService.get<string>('POHODA_API_URL');
-    const pohodaIco = this.configService.get<string>('POHODA_ICO');
+    this.logger.log('PohodaService KONSTRUKTOR byl zavolán.');
+  }
 
-    if (!pohodaUrl || !pohodaIco) {
-      throw new InternalServerErrorException('Pohoda API URL or ICO is not configured.');
+  onModuleInit() {
+    this.logger.log('PohodaService ON_MODULE_INIT byl zavolán.');
+    
+    this.pohodaUrl = this.configService.get<string>('POHODA_API_URL');
+    this.pohodaIco = this.configService.get<string>('POHODA_ICO');
+
+    this.logger.log(`Nalezená POHODA_API_URL: ${this.pohodaUrl}`);
+    this.logger.log(`Nalezený POHODA_ICO: ${this.pohodaIco}`);
+
+    if (!this.pohodaUrl || !this.pohodaIco) {
+      this.logger.error('!!! Konfigurace pro Pohodu NENALEZENA. Služba nebude fungovat správně. !!!');
+    } else {
+      this.logger.log('Konfigurace pro Pohodu úspěšně načtena.');
     }
-
-    this.pohodaUrl = pohodaUrl;
-    this.pohodaIco = pohodaIco;
   }
 
   /**
@@ -36,10 +42,12 @@ export class PohodaService {
    * @returns The ID of the created invoice in Pohoda.
    */
   async createInvoice(transaction: Transaction & { items: any[], client: Client }): Promise<string> {
+    if (!this.pohodaUrl || !this.pohodaIco) {
+      throw new InternalServerErrorException('Pohoda Service není nakonfigurována.');
+    }
     const xml = this.buildInvoiceXml(transaction);
     const response = await this.sendXmlRequest(xml);
     
-    // TODO: Parse the response and extract the created invoice ID
     this.logger.log('Invoice creation response:', JSON.stringify(response, null, 2));
     
     return 'pohoda-id-placeholder';
@@ -51,10 +59,12 @@ export class PohodaService {
    * @returns The ID of the created address book entry in Pohoda.
    */
   async createAddressbookEntry(client: Client): Promise<string> {
+     if (!this.pohodaUrl || !this.pohodaIco) {
+      throw new InternalServerErrorException('Pohoda Service není nakonfigurována.');
+    }
     const xml = this.buildAddressbookXml(client);
     const response = await this.sendXmlRequest(xml);
 
-    // TODO: Parse the response and extract the created address book ID
     this.logger.log('Address book creation response:', JSON.stringify(response, null, 2));
 
     return 'pohoda-id-placeholder';
@@ -66,8 +76,10 @@ export class PohodaService {
    * @returns The XML response from Pohoda parsed as a JavaScript object.
    */
   private async sendXmlRequest(xmlData: string): Promise<ElementCompact> {
+    if (!this.pohodaUrl) { // Kontrola pro TypeScript
+        throw new InternalServerErrorException('Pohoda URL není definována.');
+    }
     try {
-      // Pohoda uses Windows-1250 encoding
       const encodedXml = iconv.encode(xmlData, 'win1250');
 
       const response: AxiosResponse<ArrayBuffer> = await firstValueFrom(
@@ -84,7 +96,7 @@ export class PohodaService {
       const parsedResponse = xml2js(decodedResponse, { compact: true });
 
       return parsedResponse;
-    } catch (error) {
+    } catch (error: any) {
       const errorResponse = error.response?.data ? iconv.decode(Buffer.from(error.response.data), 'win1250') : error.message;
       this.logger.error('Error sending XML to Pohoda:', errorResponse);
       throw new InternalServerErrorException('Failed to communicate with Pohoda API.');
@@ -157,7 +169,7 @@ export class PohodaService {
           <typ:address>
             <typ:company>${client.firstName} ${client.lastName}</typ:company>
             <typ:email>${client.email}</typ:email>
-            <typ:phone>${client.phone}</typ:phone>
+            <typ:phone>${client.phone || ''}</typ:phone>
           </typ:address>
         </adb:identity>
       </adb:addressbookHeader>
