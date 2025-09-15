@@ -26,6 +26,10 @@ import { PohodaModule } from './pohoda/pohoda.module';
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,
+      // TOTO JE TA KLÍČOVÁ OPRAVA:
+      // Říkáme ConfigModule, aby se podíval na standardní cestu,
+      // kam Render umisťuje Secret Files v Dockeru.
+      envFilePath: '/etc/secrets/.env',
     }),
     PohodaModule,
     UsersModule,
@@ -45,7 +49,6 @@ import { PohodaModule } from './pohoda/pohoda.module';
   controllers: [AppController],
   providers: [
     AppService,
-    // Globální guardy zajišťují, že všechny endpointy jsou standardně chráněné.
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -57,3 +60,6 @@ import { PohodaModule } from './pohoda/pohoda.module';
   ],
 })
 export class AppModule {}
+
+    
+
