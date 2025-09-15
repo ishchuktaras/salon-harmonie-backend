@@ -1,3 +1,5 @@
+// src/pohoda/pohoda.service.ts
+
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
