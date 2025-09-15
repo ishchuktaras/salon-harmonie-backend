@@ -1,36 +1,25 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Request,
-  Get,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Post, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { LocalAuthGuard } from './local-auth.guard';
 import { Public } from './public.decorator';
-import { LoginDto } from './dto/login.dto'; 
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
-  @Public()
+  /**
+   * Toto je náš nový, vylepšený login endpoint.
+   * Je to jediný endpoint, který bude používat LocalAuthGuard.
+   */
+  @Public() // Označíme ho jako veřejný, aby prošel přes globální JwtAuthGuard
+  @UseGuards(LocalAuthGuard) // Tento Guard spustí naši LocalStrategy
   @Post('login')
-  async login(@Body() loginDto: LoginDto) {
-    const user = await this.authService.validateUser(
-      loginDto.email,
-      loginDto.password,
-    );
-    if (!user) {
-      throw new UnauthorizedException('Neplatný e-mail nebo heslo.');
-    }
-    return this.authService.login(user);
+  async login(@Request() req: any) {
+    // Pokud se kód dostane sem, znamená to, že LocalStrategy úspěšně
+    // validovala uživatele. Validovaný objekt uživatele je nyní v `req.user`.
+    // Teď už jen zavoláme službu, aby vygenerovala JWT token.
+    return this.authService.login(req.user);
   }
 
-  // Tento endpoint zůstává chráněný globálním guardem, protože nemá @Public()
-  @Get('profile')
-  getProfile(@Request() req) {
-    // req.user je sem vložen po úspěšné validaci tokenu v JwtStrategy
-    return req.user;
-  }
+  // Zde může být v budoucnu např. endpoint /profile, který bude chráněný
 }
