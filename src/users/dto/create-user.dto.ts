@@ -1,6 +1,12 @@
-// src/users/dto/create-user.dto.ts
-import { IsEmail, IsEnum, IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { Role } from '../enums/role.enum';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional, // <-- Přidáme IsOptional
+  IsString,
+  MinLength,
+} from 'class-validator';
+import { Role } from '@prisma/client'; // <-- KLÍČOVÁ OPRAVA: Import z Prisma
 
 export class CreateUserDto {
   @IsEmail({}, { message: 'Prosím, zadejte platný e-mail.' })
@@ -21,6 +27,6 @@ export class CreateUserDto {
   password: string;
 
   @IsEnum(Role, { message: 'Role musí být jedna z platných hodnot.' })
-  @IsNotEmpty({ message: 'Role nesmí být prázdná.' })
-  role: Role;
+  @IsOptional() // <-- Role je nyní volitelná, služba přiřadí "KLIENT" jako výchozí
+  role?: Role;
 }

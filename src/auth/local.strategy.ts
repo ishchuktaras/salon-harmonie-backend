@@ -1,29 +1,32 @@
-import { Strategy } from 'passport-local';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
-export class LocalStrategy extends PassportStrategy(Strategy) {
-  constructor(private authService: AuthService) {
-    // Zde můžeme nastavit, jak se jmenují pole pro jméno a heslo v našem DTO.
-    // Výchozí je 'username' a 'password', my používáme 'email'.
-    super({ usernameField: 'email' });
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private usersService: UsersService) {
+    const jwtSecret = process.env.JWT_SECRET;
+
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET není definován v .env souboru!');
+    }
+
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: jwtSecret, // Nyní je jisté, že je to string
+    });
   }
 
-  /**
-   * Tuto metodu zavolá Passport automaticky, když se použije LocalAuthGuard.
-   * Naším úkolem je jen zavolat metodu validateUser, kterou už máme hotovou.
-   * @param email - Hodnota z pole 'email' v těle požadavku.
-   * @param password - Hodnota z pole 'password' v těle požadavku.
-   * @returns Vrací objekt uživatele (bez hesla), pokud je validace úspěšná.
-   */
-  async validate(email: string, password: string): Promise<any> {
-    const user = await this.authService.validateUser(email, password);
+  async validate(payload: any) {
+    // Payload obsahuje { email, sub, role, ... } kde 'sub' je ID uživatele
+    const user = await this.usersService.findOne(payload.sub);
     if (!user) {
-      // Pokud validateUser vrátí null, vyhodíme standardní 401 chybu.
-      throw new UnauthorizedException('Neplatné přihlašovací údaje.');
+      throw new UnauthorizedException();
     }
-    return user;
+    // Odebereme hash hesla z objektu, který se připojí k requestu
+    const { passwordHash, ...result } = user;
+    return result;
   }
 }

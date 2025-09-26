@@ -1,5 +1,3 @@
-// Soubor: src/auth/auth.service.ts
-
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -8,7 +6,6 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { GoogleLoginDto } from './dto/google-login.dto';
 import { Role, User } from '@prisma/client';
 
-// Definice typu pro data, která jdou do JWT tokenu.
 type UserForLogin = Pick<User, 'email' | 'id' | 'role' | 'firstName' | 'lastName'>;
 
 @Injectable()
@@ -48,23 +45,21 @@ export class AuthService {
   
   async findOrCreateFromGoogle(googleLoginDto: GoogleLoginDto) {
     const { email, firstName, lastName } = googleLoginDto;
-    
     let user = await this.usersService.findOneByEmail(email);
 
     if (!user) {
       const randomPassword = Math.random().toString(36).slice(-8);
       
+      // Voláme create s objektem, který odpovídá CreateUserDto
       user = await this.usersService.create({
         email,
         firstName,
         lastName,
         password: randomPassword,
-        role: Role.KLIENT,
+        role: Role.KLIENT, 
       });
     }
     
-    // Plný objekt 'user' je kompatibilní s typem 'UserForLogin', 
-    // TypeScript si vezme jen potřebné vlastnosti.
     return this.login(user);
   }
 }
