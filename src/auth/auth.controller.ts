@@ -1,25 +1,37 @@
-import { Controller, Post, UseGuards, Request } from '@nestjs/common';
+// src/auth/auth.controller.ts
+
+import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 import { Public } from './public.decorator';
+import { CreateUserDto } from '../users/dto/create-user.dto'; 
+import { GoogleLoginDto } from './dto/google-login.dto'; 
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  /**
-   * Toto je náš nový, vylepšený login endpoint.
-   * Je to jediný endpoint, který bude používat LocalAuthGuard.
-   */
-  @Public() // Označíme ho jako veřejný, aby prošel přes globální JwtAuthGuard
-  @UseGuards(LocalAuthGuard) // Tento Guard spustí naši LocalStrategy
+  // Původní endpoint pro přihlášení jménem a heslem - zůstává
+  @Public()
+  @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Request() req: any) {
-    // Pokud se kód dostane sem, znamená to, že LocalStrategy úspěšně
-    // validovala uživatele. Validovaný objekt uživatele je nyní v `req.user`.
-    // Teď už jen zavoláme službu, aby vygenerovala JWT token.
     return this.authService.login(req.user);
   }
 
-  // Zde může být v budoucnu např. endpoint /profile, který bude chráněný
+  // --- NOVINKA: Endpoint pro registraci klienta ---
+  @Public()
+  @Post('register')
+  async register(@Body() createUserDto: CreateUserDto) {
+    // Zavoláme novou metodu v AuthService, která se postará o vytvoření uživatele a přihlášení
+    return this.authService.register(createUserDto);
+  }
+  
+  // --- NOVINKA: Endpoint pro zpracování Google přihlášení ---
+  @Public()
+  @Post('google-login')
+  async googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
+    // Nová metoda, která najde nebo vytvoří uživatele na základě Google profilu
+    return this.authService.findOrCreateFromGoogle(googleLoginDto);
+  }
 }

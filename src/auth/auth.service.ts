@@ -1,9 +1,15 @@
-// src/auth/auth.service.ts
+// Soubor: src/auth/auth.service.ts
 
 import { Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt'; 
+import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
+import { Role, User } from '@prisma/client';
+
+// Definice typu pro data, která jdou do JWT tokenu.
+type UserForLogin = Pick<User, 'email' | 'id' | 'role' | 'firstName' | 'lastName'>;
 
 @Injectable()
 export class AuthService {
@@ -12,34 +18,16 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, pass: string): Promise<any> {
-    // SPUSTÍME STOPKY
-    console.time('Login Validation'); 
-
-    console.log(`--- Pokus o validaci uživatele: ${email} ---`);
-    
-    console.timeLog('Login Validation', 'Hledám uživatele v DB...');
+  async validateUser(email: string, pass: string): Promise<UserForLogin | null> {
     const user = await this.usersService.findOneByEmail(email);
-    console.timeLog('Login Validation', 'Uživatel nalezen.');
-
-    if (user) {
-      console.timeLog('Login Validation', 'Porovnávám heslo pomocí bcrypt...');
-      const isPasswordMatching = await bcrypt.compare(pass, user.passwordHash);
-      console.timeLog('Login Validation', 'Porovnání hesla dokončeno.');
-
-      if (isPasswordMatching) {
-        // ZASTAVÍME STOPKY A VYPÍŠEME VÝSLEDEK
-        console.timeEnd('Login Validation');
-        const { passwordHash, ...result } = user;
-        return result;
-      }
+    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
+      const { passwordHash, createdAt, ...result } = user;
+      return result;
     }
-    
-    console.timeEnd('Login Validation');
     return null;
   }
 
-  async login(user: any) {
+  async login(user: UserForLogin) {
     const payload = {
       email: user.email,
       sub: user.id,
@@ -49,7 +37,34 @@ export class AuthService {
     };
     return {
       access_token: this.jwtService.sign(payload),
-      user: payload, // Přidáme informace o uživateli do odpovědi
+      user: payload,
     };
+  }
+
+  async register(createUserDto: CreateUserDto) {
+    const newUser = await this.usersService.create(createUserDto);
+    return this.login(newUser);
+  }
+  
+  async findOrCreateFromGoogle(googleLoginDto: GoogleLoginDto) {
+    const { email, firstName, lastName } = googleLoginDto;
+    
+    let user = await this.usersService.findOneByEmail(email);
+
+    if (!user) {
+      const randomPassword = Math.random().toString(36).slice(-8);
+      
+      user = await this.usersService.create({
+        email,
+        firstName,
+        lastName,
+        password: randomPassword,
+        role: Role.KLIENT,
+      });
+    }
+    
+    // Plný objekt 'user' je kompatibilní s typem 'UserForLogin', 
+    // TypeScript si vezme jen potřebné vlastnosti.
+    return this.login(user);
   }
 }
