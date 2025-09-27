@@ -1,3 +1,4 @@
+// src/reports/reports.service.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { startOfToday, endOfToday, startOfYesterday, endOfYesterday, subDays, startOfWeek, endOfWeek, startOfDay, endOfDay } from 'date-fns';
@@ -9,8 +10,9 @@ export class ReportsService {
 
   /**
    * Získá komplexní souhrn dat pro hlavní stránku dashboardu.
+   * Přejmenováno z getDashboardSummary na getSalesReport, aby odpovídalo controlleru.
    */
-  async getDashboardSummary() {
+  async getSalesReport() {
     const todayStart = startOfToday();
     const todayEnd = endOfToday();
     const yesterdayStart = startOfYesterday();
@@ -99,7 +101,6 @@ export class ReportsService {
 
   /**
    * Provede denní uzávěrku pro zadané datum.
-   * TOTO JE TVŮJ PŮVODNÍ, KOMPLETNÍ KÓD.
    */
   async performDailyCloseout(date: string) {
     const targetDate = new Date(date);
@@ -142,14 +143,13 @@ export class ReportsService {
       },
     });
 
-    // Poznámka: Ujistěte se, že máte implementovanou metodu sendDailySummary
-    // await this.abraFlexiService.sendDailySummary(totalRevenue, date);
+    // Zde bude v budoucnu volání pro odeslání do Pohody
+    // await this.pohodaService.sendDailySummary(totalRevenue, date);
 
     return {
       message: `Uzávěrka pro den ${date} byla úspěšně provedena.`,
-      totalRevenue: totalRevenue, // Vracíme v haléřích
+      totalRevenue: totalRevenue,
       closedCount: transactionsToClose.length,
     };
   }
 }
-

@@ -11,49 +11,42 @@ import {
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
-// Poznámka: AuthGuard('jwt') je v pořádku, ale globální JwtAuthGuard je často čistší řešení.
-import { AuthGuard } from '@nestjs/passport'; 
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role } from '../users/enums/role.enum';
-import { Public } from '../auth/public.decorator';
+import { Role } from '@prisma/client'; // <-- OPRAVENO
 
 @Controller('services')
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
 
-  @Public()
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  create(@Body() createServiceDto: CreateServiceDto) {
+    return this.servicesService.create(createServiceDto);
+  }
+
   @Get()
   findAll() {
     return this.servicesService.findAll();
   }
 
-  @Public()
-  @Get(':id/therapists')
-  findTherapistsForService(@Param('id') id: string) {
-    return this.servicesService.findTherapistsForService(+id);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.servicesService.findOne(+id);
   }
 
-  
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(Role.SUPER_ADMIN, Role.ADMIN) // Role.MANAGER nahrazena za Role.SUPER_ADMIN
-  @Post()
-  create(@Body() createServiceDto: CreateServiceDto) {
-    return this.servicesService.create(createServiceDto);
-  }
-
-  
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(Role.SUPER_ADMIN, Role.ADMIN) // Role.MANAGER nahrazena za Role.SUPER_ADMIN
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto) {
     return this.servicesService.update(+id, updateServiceDto);
   }
 
- 
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(Role.SUPER_ADMIN, Role.ADMIN) // Role.MANAGER nahrazena za Role.SUPER_ADMIN
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   remove(@Param('id') id: string) {
     return this.servicesService.remove(+id);
   }
