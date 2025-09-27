@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -15,8 +6,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
-// Opravený import a název souboru
-import { CreateTransactionItemDto } from './dto/create-transaction-item.dto';
+import { CreateTransactionItemDto } from './dto/create-transaction-item.dto'; // <-- Správný import
 
 @Controller('transactions')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -33,35 +23,27 @@ export class TransactionsController {
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.RECEPCNI)
   addItem(
     @Param('id') id: string,
-    @Body() createTransactionItemDto: CreateTransactionItemDto, // Opravený název
+    @Body() createTransactionItemDto: CreateTransactionItemDto, // <-- Správný název
   ) {
     return this.transactionsService.addItemToTransaction(+id, createTransactionItemDto);
   }
-
+  
+  // ... zbytek metod ...
   @Get()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.RECEPCNI)
-  findAll() {
-    return this.transactionsService.findAll();
-  }
+  findAll() { return this.transactionsService.findAll(); }
 
   @Get(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.RECEPCNI)
-  findOne(@Param('id') id: string) {
-    return this.transactionsService.findOne(+id);
-  }
+  findOne(@Param('id') id: string) { return this.transactionsService.findOne(+id); }
 
   @Patch(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.RECEPCNI)
-  update(
-    @Param('id') id: string,
-    @Body() updateTransactionDto: UpdateTransactionDto,
-  ) {
+  update(@Param('id') id: string, @Body() updateTransactionDto: UpdateTransactionDto) {
     return this.transactionsService.update(+id, updateTransactionDto);
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  remove(@Param('id') id: string) {
-    return this.transactionsService.remove(+id);
-  }
+  remove(@Param('id') id: string) { return this.transactionsService.remove(+id); }
 }

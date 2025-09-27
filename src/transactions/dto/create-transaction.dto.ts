@@ -1,36 +1,25 @@
-import { Type } from 'class-transformer';
 import {
   IsArray,
   IsInt,
   IsNotEmpty,
-  IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
-// Změna zde: Importujeme správný název třídy
-import { AddTransactionItemDto } from './add-item.dto';
+import { Type } from 'class-transformer';
+// Opravený import, aby odpovídal Kroku 1
+import { CreateTransactionItemDto } from './create-transaction-item.dto';
 
 export class CreateTransactionDto {
   @IsInt()
   @IsNotEmpty()
-  total: number;
+  clientId: number;
 
   @IsString()
   @IsNotEmpty()
   paymentMethod: string;
 
-  @IsInt()
-  @IsNotEmpty()
-  clientId: number;
-
-  @IsInt()
-  @IsOptional()
-  reservationId?: number;
-
   @IsArray()
   @ValidateNested({ each: true })
-  // Změna zde: Používáme správný název třídy
-  @Type(() => AddTransactionItemDto)
-  items: AddTransactionItemDto[];
+  @Type(() => CreateTransactionItemDto)
+  items: CreateTransactionItemDto[];
 }
-

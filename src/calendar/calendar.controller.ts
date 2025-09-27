@@ -1,31 +1,32 @@
 // src/calendar/calendar.controller.ts
-import { Controller, Get, Query } from '@nestjs/common';
+
+import {
+  Controller,
+  Get,
+  Query,
+  UseGuards,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { CalendarService } from './calendar.service';
-import { Public } from '../auth/public.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role } from '../users/enums/role.enum';
+import { Role } from '@prisma/client'; 
 
 @Controller('calendar')
+@UseGuards(JwtAuthGuard)
 export class CalendarController {
   constructor(private readonly calendarService: CalendarService) {}
 
-  @Public()
   @Get('availability')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.RECEPCNI, Role.TERAPEUT)
   getAvailability(
     @Query('therapistId') therapistId: string,
-    @Query('serviceId') serviceId: string,
     @Query('date') date: string,
   ) {
-    return this.calendarService.getAvailability(+therapistId, +serviceId, date);
-  }
-
-  // --- ENDPOINT PRO ZOBRAZENÍ KALENDÁŘE PRO MANAGERY ---
-  @Roles(Role.MANAGER, Role.ADMIN, Role.SUPER_ADMIN)
-  @Get('manager-view')
-  getManagerView(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-  ) {
-    return this.calendarService.getManagerView(startDate, endDate);
+    return this.calendarService.getTherapistAvailabilityForDate(
+      +therapistId,
+      new Date(date),
+    );
   }
 }

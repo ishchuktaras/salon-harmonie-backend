@@ -1,32 +1,19 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UsersService } from '../users/users.service';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { AuthService } from './auth.service';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private usersService: UsersService) {
-    const jwtSecret = process.env.JWT_SECRET;
-
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET není definován v .env souboru!');
-    }
-
-    super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: jwtSecret, // Nyní je jisté, že je to string
-    });
+export class LocalStrategy extends PassportStrategy(Strategy) {
+  constructor(private authService: AuthService) {
+    super({ usernameField: 'email' }); 
   }
 
-  async validate(payload: any) {
-    // Payload obsahuje { email, sub, role, ... } kde 'sub' je ID uživatele
-    const user = await this.usersService.findOne(payload.sub);
+  async validate(email: string, pass: string): Promise<any> {
+    const user = await this.authService.validateUser(email, pass);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Nesprávné přihlašovací údaje.');
     }
-    // Odebereme hash hesla z objektu, který se připojí k requestu
-    const { passwordHash, ...result } = user;
-    return result;
+    return user;
   }
 }
