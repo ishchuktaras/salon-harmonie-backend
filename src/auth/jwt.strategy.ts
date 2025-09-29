@@ -4,10 +4,10 @@ import { Strategy } from 'passport-jwt';
 import { UsersService } from '../users/users.service';
 import { Request } from 'express';
 
-// Funkce pro extrakci tokenu z cookie
+// --- FUNKCE PRO EXTRAKCI TOKENU Z COOKIE ---
 const cookieExtractor = (req: Request): string | null => {
   if (req && req.cookies) {
-    return req.cookies['token']; // Název cookie
+    return req.cookies['token']; // Název cookie musí odpovídat tomu, co nastavuje frontend
   }
   return null;
 };
@@ -21,7 +21,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     super({
-      // Říkáme strategii, aby použila naši funkci pro čtení z cookie
       jwtFromRequest: cookieExtractor,
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
@@ -33,6 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException();
     }
+    // Z bezpečnostních důvodů nevracíme hash hesla
     const { passwordHash, ...result } = user;
     return result;
   }
